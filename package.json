@@ -1,0 +1,37 @@
+{
+  "name": "@rugo-vn/service",
+  "version": "2.0.0-beta.0",
+  "description": "Microservice infrastructure",
+  "bin": {
+    "start": "src/start.js"
+  },
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/start.js",
+    "doc": "jsdoc2md **/*.js > docs/API.md",
+    "lint:check": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "lint": "npm run lint:fix",
+    "test": "mocha",
+    "coverage": "c8 npm run test"
+  },
+  "dependencies": {
+    "camelcase": "^7.0.0",
+    "dotenv": "^16.0.1",
+    "log4js": "^6.6.1",
+    "moleculer": "^0.14.21",
+    "ramda": "^0.28.0"
+  },
+  "devDependencies": {
+    "c8": "^7.12.0",
+    "chai": "^4.3.6",
+    "eslint": "^8.20.0",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-jsdoc": "^39.3.3",
+    "jsdoc-to-markdown": "^7.1.1",
+    "mocha": "^10.0.0"
+  },
+  "author": "Vu Anh Hao <hi@haova.me> (https://www.haova.me)",
+  "license": "MIT"
+}
