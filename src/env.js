@@ -4,10 +4,10 @@ import { ENV_PREFIX } from './constants.js';
 const tryJSON = raw => {
   try {
     return JSON.parse(raw);
-  } catch(_) {
+  } catch (_) {
     return raw;
   }
-}
+};
 
 export const parseEnv = rawEnv => {
   const env = {};
