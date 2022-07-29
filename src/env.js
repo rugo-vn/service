@@ -1,6 +1,14 @@
 import camelCase from 'camelcase';
 import { ENV_PREFIX } from './constants.js';
 
+const tryJSON = raw => {
+  try {
+    return JSON.parse(raw);
+  } catch(_) {
+    return raw;
+  }
+}
+
 export const parseEnv = rawEnv => {
   const env = {};
 
@@ -10,12 +18,12 @@ export const parseEnv = rawEnv => {
     const name = key.substring(ENV_PREFIX.length).trim();
     const rel = /^(.*)_[0-9]+?$/gm.exec(name);
     if (!rel) {
-      env[camelCase(name)] = rawEnv[key];
+      env[camelCase(name)] = tryJSON(rawEnv[key]);
       continue;
     }
 
     env[camelCase(rel[1])] ||= [];
-    env[camelCase(rel[1])].push(rawEnv[key]);
+    env[camelCase(rel[1])].push(tryJSON(rawEnv[key]));
   }
 
   return env;

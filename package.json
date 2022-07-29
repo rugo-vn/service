@@ -1,6 +1,6 @@
 {
   "name": "@rugo-vn/service",
-  "version": "2.0.0-beta.1",
+  "version": "2.0.0-beta.2",
   "description": "Microservice infrastructure",
   "bin": {
     "start": "src/start.js"
@@ -25,7 +25,6 @@
     "ramda": "^0.28.0"
   },
   "devDependencies": {
-    "@appnest/readme": "^1.2.7",
     "c8": "^7.12.0",
     "chai": "^4.3.6",
     "eslint": "^8.20.0",
