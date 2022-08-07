@@ -21,3 +21,10 @@ export const actions = {
     return this.settings;
   }
 };
+
+/**
+ *
+ */
+export async function started () {
+  this.settings.foo = 'bar';
+}
