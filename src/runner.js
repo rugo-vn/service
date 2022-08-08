@@ -1,8 +1,9 @@
 import process from 'node:process';
 
-import { curry, curryN, flatten, mergeDeepLeft, path } from 'ramda';
+import { clone, curry, curryN, flatten, mergeDeepLeft, path } from 'ramda';
 
 import { parseEnv } from './env.js';
+import { createLogger } from './logger.js';
 import { addService, loadService } from './service.js';
 
 /**
@@ -87,6 +88,16 @@ async function runHooks (type, service, action, ctx, res) {
   return res;
 }
 
+function serialize(data) {
+  if (typeof data === 'string' || typeof data === 'number')
+    return data;
+
+  if (!data)
+    return data;
+
+  return JSON.parse(JSON.stringify(data));
+}
+
 /**
  *
  * @param context
@@ -99,7 +110,7 @@ async function callService (context, address, params = null, opts = {}) {
     if (address.indexOf(service.name + '.') !== 0) { continue; }
 
     const action = address.substring(service.name.length + 1);
-    const meta = opts.meta || {};
+    const meta = clone(opts.meta || {});
 
     if (!service.actions[action]) { continue; }
 
@@ -110,14 +121,14 @@ async function callService (context, address, params = null, opts = {}) {
     };
 
     let res = await runHooks('before', service, action, ctx);
-    if (res !== undefined) { return res; }
+    if (res !== undefined) { return serialize(res); }
 
     ctx.call = (address, params, opts) => callService(context, address, params, mergeDeepLeft(opts, { meta }));
 
     res = await service.actions[action].bind(service)(ctx);
     delete ctx.call;
 
-    return await runHooks('after', service, action, ctx, res);
+    return serialize(await runHooks('after', service, action, ctx, res));
   }
 
   throw new Error(`Service '${address}' is not found.`);
@@ -134,8 +145,18 @@ export function createRunner (env = process.env) {
   context.services = [{
     name: '$node',
     actions: {
-      async services () {
+      services () {
         return context.services;
+      },
+
+      actions () {
+        return flatten(context.services.map(service => {
+          const res = [];
+          for (let actionName in service.actions)
+            res.push({ name: `${service.name}.${actionName}`});
+
+          return res;
+        }));
       }
     }
   }];
@@ -147,6 +168,7 @@ export function createRunner (env = process.env) {
   context.stop = () => stopService(context);
 
   context.call = curryN(2, callService)(context);
+  context.logger = createLogger('runner');
 
   return context;
 }
