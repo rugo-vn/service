@@ -88,12 +88,14 @@ async function runHooks (type, service, action, ctx, res) {
   return res;
 }
 
-function serialize(data) {
-  if (typeof data === 'string' || typeof data === 'number')
-    return data;
+/**
+ *
+ * @param data
+ */
+function serialize (data) {
+  if (typeof data === 'string' || typeof data === 'number') { return data; }
 
-  if (!data)
-    return data;
+  if (!data) { return data; }
 
   return JSON.parse(JSON.stringify(data));
 }
@@ -146,14 +148,13 @@ export function createRunner (env = process.env) {
     name: '$node',
     actions: {
       services () {
-        return context.services;
+        return context.services.map((service) => ({ name: service.name }));
       },
 
       actions () {
         return flatten(context.services.map(service => {
           const res = [];
-          for (let actionName in service.actions)
-            res.push({ name: `${service.name}.${actionName}`});
+          for (const actionName in service.actions) { res.push({ name: `${service.name}.${actionName}` }); }
 
           return res;
         }));

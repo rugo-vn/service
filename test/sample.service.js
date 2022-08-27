@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 export const name = 'sample';
 
 export const settings = {
