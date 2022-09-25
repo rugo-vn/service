@@ -1,77 +1,69 @@
 /* eslint-disable */
 
 import { assert, expect } from 'chai';
-import { createRunner } from '../src/index.js';
+import { createBroker } from '../src/index.js';
 import * as sample from './sample.service.js';
 
 describe('Rugo service test', () => {
   it('should simple run in file', async () => {
-    const runner = createRunner();
-    runner.add(sample);
+    const broker = createBroker();
+    broker.createService(sample);
 
-    await runner.start();
+    await broker.start();
 
     // simple add
-    const result = await runner.call('sample.add', { a: 1, b: 2 });
+    const result = await broker.call('sample.add', { a: 1, b: 2 });
     expect(result).to.be.eq(3);
 
-    // list service
-    const list = await runner.call('$node.services');
-    expect(list.map(item => item.name)).is.members(['sample', '$node']);
-
-    // get meta
-    const meta = await runner.call('sample.getMeta', null, { meta: { foo: 'bar' } });
-    expect(meta).to.has.property('foo', 'bar');
-
-    await runner.stop();
+    await broker.close();
   });
 
   it('should get settings from env', async () => {
-    const runner = createRunner({ RUGO_PORT: 3000 });
-    runner.add(sample);
+    const broker = createBroker({ port: 3000 });
+    broker.createService(sample);
 
-    await runner.start();
+    await broker.start();
 
-    const result = await runner.call('sample.getSettings');
+    const result = await broker.call('sample.getSettings');
     expect(result).to.has.property('abc', 'def');
     expect(result).to.has.property('foo', 'bar');
     expect(result).to.has.property('port', 3000);
 
-    await runner.stop();
+    await broker.close();
   });
 
   it('should not call invalid action', async () => {
-    const runner = createRunner();
-    runner.add(sample);
+    const broker = createBroker();
+    broker.createService(sample);
 
-    await runner.start();
+    await broker.start();
 
     try {
-      await runner.call('sample.subtract', { a: 1, b: 2 });
+      await broker.call('sample.subtract', { a: 1, b: 2 });
       assert.fail();
     } catch (e) {
-      expect(e).to.has.property('message', 'Service \'sample.subtract\' is not found.');
+      expect(e).to.has.property('message', 'Invalid action address "sample.subtract"');
     }
 
-    await runner.stop();
+    await broker.close();
   });
 
   it('should auto load services', async () => {
-    const runner = createRunner({ RUGO_SERVICES_0: './test/sample.service.js' });
+    const broker = createBroker({ _services: ['./test/sample.service.js'] });
 
-    await runner.load();
-    await runner.start();
+    await broker.loadServices();
+    await broker.start();
 
-    const result = await runner.call('sample.add', { a: 1, b: 2 });
+    const result = await broker.call('sample.add', { a: 1, b: 2 });
     expect(result).to.be.eq(3);
 
-    await runner.stop();
+    await broker.close();
   });
 
   it('should run method', async () => {
-    const runner = createRunner();
+    const broker = createBroker();
 
-    runner.add({
+    broker.createService({
       name: 'foo',
       actions: {
         test(){ return this.speak(); }
@@ -81,60 +73,60 @@ describe('Rugo service test', () => {
       }
     })
 
-    await runner.start();
+    await broker.start();
 
-    const res = await runner.call('foo.test');
+    const res = await broker.call('foo.test');
     expect(res).to.be.eq('meow');
 
-    await runner.stop();
+    await broker.close();
   });
 
-  it('should nested meta', async () => {
-    const runner = createRunner();
+  it('should shared', async () => {
+    const broker = createBroker();
 
-    runner.add({
+    broker.createService({
       name: 'foo',
-      actions: { async next(ctx){
-        await ctx.call('bar.next', null, { meta: { month: 'august', hello: 'world', day: 'monday' } });
-        return await ctx.call('bar.next', null, { meta: { hello: 'kitty', day: 'sunday' } });
+      actions: { async next(_, nextCall){
+        await nextCall('bar.next', {}, { month: 'august', hello: 'world', day: 'monday' });
+        return await nextCall('bar.next', {}, { hello: 'kitty', day: 'sunday' });
       } }
     });
 
-    runner.add({
+    broker.createService({
       name: 'bar',
-      actions: { async next(ctx){ return await ctx.call('abc.next', null, { meta: { hello: 'doraemon', time: 'morning' } }) } }
+      actions: { async next(_, nextCall){ return await nextCall('abc.next', {}, { hello: 'doraemon', time: 'morning' }); } }
     });
 
-    runner.add({
+    broker.createService({
       name: 'abc',
-      actions: { async next(ctx){ return ctx.meta } }
+      actions: { async next(args){ return args } }
     });
 
-    await runner.start();
+    await broker.start();
 
-    const res = await runner.call('foo.next');
+    const res = await broker.call('foo.next');
 
     expect(res).to.has.property('hello', 'doraemon');
     expect(res).to.has.property('time', 'morning');
     expect(res).to.has.property('day', 'sunday');
 
-    await runner.stop();
+    await broker.close();
   });
 
   it('should run hooks', async () => {
-    const runner = createRunner();
-    runner.add({
+    const broker = createBroker();
+    broker.createService({
       name: 'foo',
       actions: {
-        cat({ meta }){ return meta.prefix + ' meow '; },
-        dog({ meta }){ return meta.prefix + ' growl '; },
-        async cow({ meta }){ return meta.prefix + ' moo '; },
-        sheep({ meta }){ return meta.prefix + ' baaa '; }
+        cat({ prefix }){ return prefix + ' meow '; },
+        dog({ prefix }){ return prefix + ' growl '; },
+        async cow({ prefix }){ return prefix + ' moo '; },
+        sheep({ prefix }){ return prefix + ' baaa '; }
       },
       hooks: {
         before: {
-          all(ctx){
-            ctx.meta.prefix = 'Kitty'
+          all(args){
+            args.prefix = 'Kitty'
           },
 
           dog: 'addName',
@@ -145,29 +137,29 @@ describe('Rugo service test', () => {
           }
         },
         after: {
-          async all(_, res){
+          async all(res){
             return res + '--';
           },
 
-          cow(_, res){
+          cow(res){
             return res + '++';
           }
         }
       },
       methods: {
-        addName(ctx){
-          ctx.meta.prefix = 'Rich';
+        addName(args){
+          args.prefix = 'Rich';
         }
       }
     })
 
-    await runner.start();
+    await broker.start();
 
-    expect(await runner.call('foo.cat')).to.be.eq('Kitty meow --');
-    expect(await runner.call('foo.dog')).to.be.eq('Rich growl --');
-    expect(await runner.call('foo.cow')).to.be.eq('Rich moo ++');
-    expect(await runner.call('foo.sheep')).to.be.eq('slient');
+    expect(await broker.call('foo.cat')).to.be.eq('Kitty meow --');
+    expect(await broker.call('foo.dog')).to.be.eq('Rich growl --');
+    expect(await broker.call('foo.cow')).to.be.eq('Rich moo ++');
+    expect(await broker.call('foo.sheep')).to.be.eq('slient');
 
-    await runner.stop();
+    await broker.close();
   });
 });

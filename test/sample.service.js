@@ -7,7 +7,7 @@ export const settings = {
 };
 
 export const actions = {
-  add ({ params: { a, b } }) {
+  add ({ a, b }) {
     return a + b;
   },
 
