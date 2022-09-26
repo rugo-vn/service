@@ -8,17 +8,9 @@ export const settings = {
 
 export const actions = {
   add ({ a, b }) {
+    this.logger.info('add operation');
     return a + b;
   },
-
-  async getMeta (ctx) {
-    return await ctx.call('sample.getMetaAgain');
-  },
-
-  getMetaAgain ({ meta }) {
-    return meta;
-  },
-
   getSettings () {
     return this.settings;
   }

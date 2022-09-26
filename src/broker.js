@@ -1,6 +1,7 @@
 import { clone, mergeDeepLeft } from 'ramda';
 import { createService, loadServiceConfig } from './service.js';
 import colors from 'colors';
+import emoji from 'node-emoji';
 
 const brokerConfig = {
   name: '_broker',
@@ -37,12 +38,16 @@ const brokerConfig = {
       await service.start();
       this.logger.info(`Service ${colors.bold.green(service.name)} is started in ${colors.yellow(Date.now() - ltime + 'ms')}.`);
     }
+
+    this.logger.info(emoji.get('tada') + colors.rainbow(' Started completely! ') + emoji.get('tada'));
   },
 
   async closed () {
     for (const service of this.services) {
       await service.close();
     }
+
+    this.logger.info(emoji.get('wave') + colors.yellow(' Closed completely! ') + emoji.get('wave'));
   }
 };
 

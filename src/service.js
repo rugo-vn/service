@@ -3,6 +3,7 @@ import { flatten, mergeDeepLeft, curryN } from 'ramda';
 import pino from 'pino';
 import pretty from 'pino-pretty';
 import colors from 'colors';
+import { ServiceError } from './exception.js';
 
 const BLACK_NAMES = ['name', 'settings', 'methods', 'actions', 'hooks', 'start', 'started', 'close', 'closed', 'call', 'all'];
 
@@ -13,7 +14,7 @@ const getHookFn = function (def, methods) {
 
   if (Array.isArray(def)) { return flatten(def.map(df => getHookFn(df, methods))); }
 
-  throw new Error(`Hook method "${def}" is not found.`);
+  throw new ServiceError(`Hook method "${def}" is not found.`);
 };
 
 const wrapAction = function ({ methods = {}, hooks = {} } = {}, action, service) {
@@ -57,10 +58,10 @@ const serialize = function (data) {
 };
 
 const callService = async function (brokerContext, prevShared, address, args = {}, shared = {}) {
-  if (!brokerContext[address]) { throw new Error(`Invalid action address "${address}"`); }
+  if (!brokerContext[address]) { throw new ServiceError(`Invalid action address "${address}"`); }
 
   const instance = brokerContext[address];
-  if (instance.type !== 'local') { throw new Error(`Do not support action type "${instance.type}"`); }
+  if (instance.type !== 'local') { throw new ServiceError(`Do not support action type "${instance.type}"`); }
 
   const { service, before: beforeFns, after: afterFns, action } = instance;
 
@@ -108,7 +109,7 @@ export const createService = function (brokerContext, serviceConfig) {
     const method = serviceConfig.methods[name];
 
     if (BLACK_NAMES.indexOf(name) !== -1) {
-      throw new Error(`Conflict method name "${name}"`);
+      throw new ServiceError(`Conflict method name "${name}"`);
     }
 
     service[name] = method.bind(service);
@@ -120,7 +121,7 @@ export const createService = function (brokerContext, serviceConfig) {
     const action = serviceConfig.actions[name];
 
     if (address in brokerContext) {
-      throw new Error(`Conflict action name "${address}"`);
+      throw new ServiceError(`Conflict action name "${address}"`);
     }
 
     brokerContext[address] = wrapAction(serviceConfig, action, service);
