@@ -1,5 +1,7 @@
-import { assert, expect } from "chai";
-import { createService } from "../src/service.js";
+/* eslint-disable */
+
+import { assert, expect } from 'chai';
+import { createService } from '../src/service.js';
 
 describe('Service test', () => {
   it('should create service', async () => {
@@ -8,36 +10,36 @@ describe('Service test', () => {
     const service = createService({}, {
       name: 'demo',
       actions: {
-        async listProperties() {
+        async listProperties () {
           flows.push('listProperties');
           return Object.keys(this);
-        },
+        }
       },
       methods: {
-        testBeforeMethod(){
+        testBeforeMethod () {
           flows.push('beforeMethodTest');
         },
-        testAfterMethod(){
+        testAfterMethod () {
           flows.push('afterMethodTest');
         }
       },
       hooks: {
         before: {
-          all() {
+          all () {
             flows.push('hookBeforeAll');
           },
 
-          listProperties: ['testBeforeMethod', 'testBeforeMethod'],
+          listProperties: ['testBeforeMethod', 'testBeforeMethod']
         },
         after: {
           listProperties: 'testAfterMethod'
         }
       },
-      async started(){
-        flows.push('started')
+      async started () {
+        flows.push('started');
       },
-      async closed(){
-        flows.push('closed')
+      async closed () {
+        flows.push('closed');
       }
     });
 
@@ -48,9 +50,9 @@ describe('Service test', () => {
     try {
       await service.call('demo.fail');
       assert.fail('it should fail action');
-    } catch(err){
-      expect(err).to.has.property('message', 'Invalid action address "demo.fail"')
-    };
+    } catch (err) {
+      expect(err).to.has.property('message', 'Invalid action address "demo.fail"');
+    }
 
     // list this properties
     const localProperties = await service.call('demo.listProperties');
@@ -75,25 +77,25 @@ describe('Service test', () => {
 
   it('should error create service', async () => {
     try {
-      createService({}, { name: 'demo', actions: { test() { } }, hooks: { before: { test: 'noMethod' }}});
+      createService({}, { name: 'demo', actions: { test () { } }, hooks: { before: { test: 'noMethod' } } });
       assert.fail('it should fail');
-    } catch(err) {
+    } catch (err) {
       expect(err).to.has.property('message', 'Hook method "noMethod" is not found.');
     }
 
     try {
-      createService({}, { name: 'demo', methods: { name() { }}});
+      createService({}, { name: 'demo', methods: { name () { } } });
       assert.fail('it should fail');
-    } catch(err) {
+    } catch (err) {
       expect(err).to.has.property('message', 'Conflict method name "name"');
     }
 
     try {
       const context = {};
-      createService(context, { name: 'demo', actions: { name() { }}});
-      createService(context, { name: 'demo', actions: { name() { }}});
+      createService(context, { name: 'demo', actions: { name () { } } });
+      createService(context, { name: 'demo', actions: { name () { } } });
       assert.fail('it should fail');
-    } catch(err) {
+    } catch (err) {
       expect(err).to.has.property('message', 'Conflict action name "demo.name"');
     }
   });

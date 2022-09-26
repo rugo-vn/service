@@ -21,6 +21,9 @@
     "camelcase": "^7.0.0",
     "colors": "^1.4.0",
     "dotenv": "^16.0.1",
+    "node-emoji": "^1.11.0",
+    "pino": "^8.6.0",
+    "pino-pretty": "^9.1.0",
     "ramda": "^0.28.0"
   },
   "devDependencies": {

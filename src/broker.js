@@ -1,20 +1,20 @@
 import { clone, mergeDeepLeft } from 'ramda';
 import { createService, loadServiceConfig } from './service.js';
+import colors from 'colors';
 
 const brokerConfig = {
   name: '$broker',
   methods: {
-    init(brokerContext){
+    init (brokerContext) {
       this.services ||= [];
       this.brokerContext = brokerContext;
     },
 
-    createService(serviceConfig) {
+    createService (serviceConfig) {
       const settings = clone(this.settings);
 
-      for (let key in settings){
-        if (key[0] === '_')
-          delete settings[key];
+      for (const key in settings) {
+        if (key[0] === '_') { delete settings[key]; }
       }
 
       const service = createService(this.brokerContext, mergeDeepLeft(serviceConfig, { settings }));
@@ -23,32 +23,34 @@ const brokerConfig = {
       return service;
     },
 
-    async loadServices() {
-      for (let location of this.settings._services || []){
-        let serviceConfig = await loadServiceConfig(location);
+    async loadServices () {
+      for (const location of this.settings._services || []) {
+        const serviceConfig = await loadServiceConfig(location);
         this.createService(serviceConfig);
       }
     }
   },
 
-  async started() {
-    for (let service of this.services){
+  async started () {
+    for (const service of this.services) {
+      const ltime = Date.now();
       await service.start();
+      this.logger.info(`Service ${colors.bold.green(service.name)} is started in ${colors.yellow(Date.now() - ltime + 'ms')}.`);
     }
   },
 
-  async closed() {
-    for (let service of this.services){
+  async closed () {
+    for (const service of this.services) {
       await service.close();
     }
   }
 };
 
-export const createBroker = function(settings = {}) {
+export const createBroker = function (settings = {}) {
   const brokerContext = {};
 
   const brokerService = createService(brokerContext, mergeDeepLeft(brokerConfig, { settings }));
   brokerService.init(brokerContext);
 
   return brokerService;
-}
+};
