@@ -1,7 +1,7 @@
 /* eslint-disable */
 
 import { assert, expect } from 'chai';
-import { createBroker } from '../src/index.js';
+import { createBroker, RugoError, ServiceError } from '../src/index.js';
 import * as sample from './sample.service.js';
 
 describe('Rugo service test', () => {
@@ -159,6 +159,41 @@ describe('Rugo service test', () => {
     expect(await broker.call('foo.dog')).to.be.eq('Rich growl --');
     expect(await broker.call('foo.cow')).to.be.eq('Rich moo ++');
     expect(await broker.call('foo.sheep')).to.be.eq('slient');
+
+    await broker.close();
+  });
+
+  it('should catch error', async () => {
+    const broker = createBroker({ port: 3000 });
+    broker.createService(sample);
+
+    await broker.start();
+
+    try {
+      await broker.call('sample.throwError');
+      assert.fail('should error')
+    } catch (err){
+      expect(err[0] instanceof RugoError).to.be.eq(true);
+      expect(err[0]).to.has.property('status', 400);
+    }
+
+    try {
+      await broker.call('sample.throwRugoError');
+      assert.fail('should error')
+    } catch (err){
+      expect(err[0] instanceof RugoError).to.be.eq(true);
+      expect(err[0]).to.has.property('status', 400);
+    }
+
+    try {
+      await broker.call('sample.throwServiceError');
+      assert.fail('should error')
+    } catch (err){
+      expect(err[0] instanceof RugoError).to.be.eq(true);
+      expect(err[0] instanceof ServiceError).to.be.eq(true);
+
+      expect(err[0]).to.has.property('status', 500);
+    }
 
     await broker.close();
   });

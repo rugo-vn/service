@@ -1,5 +1,5 @@
 export class RugoError extends Error {
-  constructor(message){
+  constructor (message) {
     super(message);
 
     this.status = 400;
@@ -9,7 +9,7 @@ export class RugoError extends Error {
 }
 
 export class ServiceError extends RugoError {
-  constructor(message) {
+  constructor (message) {
     super(message);
 
     this.status = 500;

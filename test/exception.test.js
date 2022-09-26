@@ -1,10 +1,12 @@
+/* eslint-disable */
+
 import { expect } from 'chai';
 import { RugoError } from '../src/index.js';
 
 describe('Exception test', () => {
   it('should create a new error class', async () => {
     class Forbidden extends RugoError {
-      constructor(message, code){
+      constructor (message, code) {
         super(message);
         this.status = '304';
         this.code = code;

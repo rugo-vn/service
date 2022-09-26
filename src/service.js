@@ -3,7 +3,7 @@ import { flatten, mergeDeepLeft, curryN } from 'ramda';
 import pino from 'pino';
 import pretty from 'pino-pretty';
 import colors from 'colors';
-import { ServiceError } from './exception.js';
+import { RugoError, ServiceError } from './exception.js';
 
 const BLACK_NAMES = ['name', 'settings', 'methods', 'actions', 'hooks', 'start', 'started', 'close', 'closed', 'call', 'all'];
 
@@ -38,6 +38,12 @@ const wrapAction = function ({ methods = {}, hooks = {} } = {}, action, service)
   if (hooks.after && hooks.after.all) { fns.push(getHookFn(hooks.after.all, methods)); }
   instance.after = flatten(fns);
 
+  // error
+  fns = [];
+  if (hooks.error && hooks.error[actionName]) { fns.push(getHookFn(hooks.error[actionName], methods)); }
+  if (hooks.error && hooks.error.all) { fns.push(getHookFn(hooks.error.all, methods)); }
+  instance.error = flatten(fns);
+
   return instance;
 };
 
@@ -63,20 +69,37 @@ const callService = async function (brokerContext, prevShared, address, args = {
   const instance = brokerContext[address];
   if (instance.type !== 'local') { throw new ServiceError(`Do not support action type "${instance.type}"`); }
 
-  const { service, before: beforeFns, after: afterFns, action } = instance;
+  const { service, before: beforeFns, after: afterFns, error: errorFns, action } = instance;
 
   const nextShared = mergeDeepLeft(shared, prevShared);
   const nextArgs = mergeDeepLeft(nextShared, args);
   const nextCall = curryN(3, callService)(brokerContext, nextShared);
 
-  let res = await runHooks(service, beforeFns, nextArgs, nextCall);
-  if (res !== undefined) { return serialize(res); }
+  try {
+    let res = await runHooks(service, beforeFns, nextArgs, nextCall);
+    if (res !== undefined) { return serialize(res); }
 
-  res = await action.bind(service)(nextArgs, nextCall);
+    res = await action.bind(service)(nextArgs, nextCall);
 
-  const newRes = await runHooks(service, afterFns, res, nextArgs, nextCall);
+    const newRes = await runHooks(service, afterFns, res, nextArgs, nextCall);
+    return serialize(newRes || res);
+  } catch (err) {
+    let newErr = err;
 
-  return serialize(newRes || res);
+    try {
+      // try hook to get value again
+      const errRes = await runHooks(service, errorFns, err, nextArgs, nextCall);
+      if (!errRes) { // hook does not have any response
+        throw err;
+      } // continue error
+
+      return serialize(errRes);
+    } catch (e) { newErr = e; }
+
+    if (!Array.isArray(newErr)) { newErr = [newErr]; }
+
+    throw newErr.map((e) => e instanceof RugoError ? e : new RugoError(e.message));
+  }
 };
 
 const createLogger = function (service) {
