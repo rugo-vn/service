@@ -2,6 +2,7 @@ import { resolve } from 'path';
 import { flatten, mergeDeepLeft, curryN } from 'ramda';
 import pino from 'pino';
 import pretty from 'pino-pretty';
+import colors from 'colors';
 
 const BLACK_NAMES = ['name', 'settings', 'methods', 'actions', 'hooks', 'start', 'started', 'close', 'closed', 'call', 'all'];
 
@@ -80,7 +81,16 @@ const callService = async function (brokerContext, prevShared, address, args = {
 const createLogger = function (service) {
   return pino(pretty({
     colorize: true,
-    ignore: 'pid,hostname'
+    ignore: 'pid,hostname',
+    customPrettifiers: {
+      name (name) {
+        if (name[0] === '_') { // system service
+          return colors.red(name.substring(1));
+        }
+
+        return name;
+      }
+    }
   })).child({
     name: service.name
   });

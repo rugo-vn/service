@@ -3,7 +3,7 @@ import { createService, loadServiceConfig } from './service.js';
 import colors from 'colors';
 
 const brokerConfig = {
-  name: '$broker',
+  name: '_broker',
   methods: {
     init (brokerContext) {
       this.services ||= [];
