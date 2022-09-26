@@ -1,5 +1,5 @@
 import { resolve } from 'path';
-import { flatten, mergeDeepLeft, curryN } from 'ramda';
+import { flatten, mergeDeepLeft, curryN, clone } from 'ramda';
 import pino from 'pino';
 import pretty from 'pino-pretty';
 import colors from 'colors';
@@ -72,7 +72,7 @@ const callService = async function (brokerContext, prevShared, address, args = {
   const { service, before: beforeFns, after: afterFns, error: errorFns, action } = instance;
 
   const nextShared = mergeDeepLeft(shared, prevShared);
-  const nextArgs = mergeDeepLeft(nextShared, args);
+  const nextArgs = clone(mergeDeepLeft(nextShared, args));
   const nextCall = curryN(3, callService)(brokerContext, nextShared);
 
   try {
