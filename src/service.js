@@ -72,7 +72,7 @@ const callService = async function (brokerContext, prevShared, address, args = {
   const { service, before: beforeFns, after: afterFns, error: errorFns, action } = instance;
 
   const nextShared = mergeDeepLeft(shared, prevShared);
-  const nextArgs = clone(mergeDeepLeft(nextShared, args));
+  const nextArgs = clone(mergeDeepLeft(args, nextShared));
   const nextCall = curryN(3, callService)(brokerContext, nextShared);
 
   try {
