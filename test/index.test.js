@@ -1,7 +1,7 @@
 /* eslint-disable */
 
 import { assert, expect } from 'chai';
-import { createBroker, RugoError, ServiceError } from '../src/index.js';
+import { createBroker, RugoException, ServiceError } from '../src/index.js';
 import * as sample from './sample.service.js';
 
 describe('Rugo service test', () => {
@@ -173,15 +173,15 @@ describe('Rugo service test', () => {
       await broker.call('sample.throwError');
       assert.fail('should error')
     } catch (err){
-      expect(err[0] instanceof RugoError).to.be.eq(true);
+      expect(err[0] instanceof RugoException).to.be.eq(true);
       expect(err[0]).to.has.property('status', 400);
     }
 
     try {
-      await broker.call('sample.throwRugoError');
+      await broker.call('sample.throwRugoException');
       assert.fail('should error')
     } catch (err){
-      expect(err[0] instanceof RugoError).to.be.eq(true);
+      expect(err[0] instanceof RugoException).to.be.eq(true);
       expect(err[0]).to.has.property('status', 400);
     }
 
@@ -189,7 +189,7 @@ describe('Rugo service test', () => {
       await broker.call('sample.throwServiceError');
       assert.fail('should error')
     } catch (err){
-      expect(err[0] instanceof RugoError).to.be.eq(true);
+      expect(err[0] instanceof RugoException).to.be.eq(true);
       expect(err[0] instanceof ServiceError).to.be.eq(true);
 
       expect(err[0]).to.has.property('status', 500);

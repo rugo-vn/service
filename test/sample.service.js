@@ -1,6 +1,6 @@
 /* eslint-disable */
 
-import { RugoError, ServiceError } from "../src/index.js";
+import { RugoException, ServiceError } from "../src/index.js";
 
 export const name = 'sample';
 
@@ -27,8 +27,8 @@ export const actions = {
   throwError () {
     throw new Error('This is error throw from action.');
   },
-  throwRugoError () {
-    throw new RugoError('This is rugo error throw from action.');
+  throwRugoException () {
+    throw new RugoException('This is rugo error throw from action.');
   },
   throwServiceError () {
     throw new ServiceError('This is service error throw from action.');

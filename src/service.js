@@ -3,7 +3,7 @@ import { flatten, mergeDeepLeft, curryN, clone } from 'ramda';
 import pino from 'pino';
 import pretty from 'pino-pretty';
 import colors from 'colors';
-import { RugoError, ServiceError } from './exception.js';
+import { RugoException, ServiceError } from './exception.js';
 
 const BLACK_NAMES = ['name', 'settings', 'methods', 'actions', 'hooks', 'start', 'started', 'close', 'closed', 'call', 'all'];
 
@@ -98,7 +98,7 @@ const callService = async function (brokerContext, prevShared, address, args = {
 
     if (!Array.isArray(newErr)) { newErr = [newErr]; }
 
-    throw newErr.map((e) => e instanceof RugoError ? e : new RugoError(e.message));
+    throw newErr.map((e) => e instanceof RugoException ? e : new RugoException(e.message));
   }
 };
 

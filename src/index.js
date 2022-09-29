@@ -1,2 +1,2 @@
 export { createBroker } from './broker.js';
-export { RugoError, ServiceError } from './exception.js';
+export { RugoException, ServiceError } from './exception.js';

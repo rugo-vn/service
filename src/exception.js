@@ -1,4 +1,4 @@
-export class RugoError extends Error {
+export class RugoException extends Error {
   constructor (message) {
     super(message);
 
@@ -8,7 +8,7 @@ export class RugoError extends Error {
   }
 }
 
-export class ServiceError extends RugoError {
+export class ServiceError extends RugoException {
   constructor (message) {
     super(message);
 

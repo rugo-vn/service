@@ -33,7 +33,7 @@ const brokerConfig = {
   },
 
   actions: {
-    services(){
+    services () {
       return this.services.map(i => ({ name: i.name }));
     }
   },
