@@ -32,6 +32,12 @@ const brokerConfig = {
     }
   },
 
+  actions: {
+    services(){
+      return this.services.map(i => ({ name: i.name }));
+    }
+  },
+
   async started () {
     for (const service of this.services) {
       const ltime = Date.now();
