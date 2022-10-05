@@ -1,9 +1,11 @@
-import { resolve } from 'path';
-import { flatten, mergeDeepLeft, curryN, clone } from 'ramda';
+import { join, resolve } from 'path';
+import { flatten, mergeDeepLeft, curryN, clone, path, call } from 'ramda';
 import pino from 'pino';
 import pretty from 'pino-pretty';
 import colors from 'colors';
 import { RugoException, ServiceError } from './exception.js';
+import { fs } from '@rugo-vn/driver';
+import { existsSync } from 'fs';
 
 const BLACK_NAMES = ['name', 'settings', 'methods', 'actions', 'hooks', 'start', 'started', 'close', 'closed', 'call', 'all'];
 
@@ -120,6 +122,42 @@ const createLogger = function (service) {
   });
 };
 
+const putToService = async function(brokerContext, address, args = {}) {
+  const nextArgs = {...args};
+  const { data } = nextArgs;
+
+  if (!data)
+    throw new RugoException('Put need data to get file.');
+
+  delete nextArgs.data;
+
+  if (typeof data !== 'string')
+    throw new RugoException('Currently, data should be string, not support any others.');
+
+  const filePath = join('/', data);
+
+  if (!existsSync(filePath))
+    throw new RugoException('File not found');
+
+  nextArgs.path = filePath;
+
+  return await callService(brokerContext, {}, address, nextArgs);
+}
+
+const getFromService = async function(brokerContext, address, args = {}) {
+  const tmpPath = await callService(brokerContext, {}, address, args);
+
+  if (tmpPath === true)
+    return tmpPath;
+
+  const filePath = join('/', tmpPath);
+
+  if (!existsSync(filePath))
+    throw new RugoException('File not found');
+
+  return filePath;
+}
+
 export const createService = function (brokerContext, serviceConfig) {
   // basic
   const service = {
@@ -150,8 +188,10 @@ export const createService = function (brokerContext, serviceConfig) {
     brokerContext[address] = wrapAction(serviceConfig, action, service);
   }
 
-  // add call
+  // add funcs
   service.call = curryN(3, callService)(brokerContext, {});
+  service.put = curryN(2, putToService)(brokerContext);
+  service.get = curryN(2, getFromService)(brokerContext);
 
   // add log
   service.logger = createLogger(service);
