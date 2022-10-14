@@ -1,6 +1,7 @@
 /* eslint-disable */
 
 import { assert, expect } from 'chai';
+import { FileCursor } from '../src/file.js';
 import { createBroker, RugoException, ServiceError } from '../src/index.js';
 import * as sample from './sample.service.js';
 
@@ -77,38 +78,6 @@ describe('Rugo service test', () => {
 
     const res = await broker.call('foo.test');
     expect(res).to.be.eq('meow');
-
-    await broker.close();
-  });
-
-  it('should shared', async () => {
-    const broker = createBroker();
-
-    broker.createService({
-      name: 'foo',
-      actions: { async next(_, nextCall){
-        await nextCall('bar.next', {}, { month: 'august', hello: 'world', day: 'monday' });
-        return await nextCall('bar.next', {}, { hello: 'kitty', day: 'sunday' });
-      } }
-    });
-
-    broker.createService({
-      name: 'bar',
-      actions: { async next(_, nextCall){ return await nextCall('abc.next', {}, { hello: 'doraemon', time: 'morning' }); } }
-    });
-
-    broker.createService({
-      name: 'abc',
-      actions: { async next(args){ return args } }
-    });
-
-    await broker.start();
-
-    const res = await broker.call('foo.next');
-
-    expect(res).to.has.property('hello', 'doraemon');
-    expect(res).to.has.property('time', 'morning');
-    expect(res).to.has.property('day', 'sunday');
 
     await broker.close();
   });
@@ -194,6 +163,26 @@ describe('Rugo service test', () => {
 
       expect(err[0]).to.has.property('status', 500);
     }
+
+    await broker.close();
+  });
+
+  it('should transfer file', async () => {
+    const broker = createBroker();
+    broker.createService(sample);
+
+    await broker.start();
+
+    // simple add
+    const result = await broker.call('sample.file', {
+      a: 1, b: 2, c: { d: FileCursor('Hello World') }
+    });
+    
+    expect(result).to.has.property('a', 1);
+    expect(result).to.has.property('b', 2);
+    expect(result).to.has.property('c');
+    expect(result.c).to.has.property('d');
+    expect(result.c.d instanceof FileCursor).to.be.eq(true);
 
     await broker.close();
   });

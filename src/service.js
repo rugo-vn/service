@@ -1,11 +1,10 @@
 import { join, resolve } from 'path';
-import { flatten, mergeDeepLeft, curryN, clone, path, call } from 'ramda';
+import { flatten, mergeDeepLeft, curryN, clone, path, call, set, lensPath } from 'ramda';
+import { RugoException, ServiceError } from './exception.js';
+import { FileCursor } from './file.js';
 import pino from 'pino';
 import pretty from 'pino-pretty';
 import colors from 'colors';
-import { RugoException, ServiceError } from './exception.js';
-import { fs } from '@rugo-vn/driver';
-import { existsSync } from 'fs';
 
 const BLACK_NAMES = ['name', 'settings', 'methods', 'actions', 'hooks', 'start', 'started', 'close', 'closed', 'call', 'all'];
 
@@ -65,7 +64,32 @@ const serialize = function (data) {
   return JSON.parse(JSON.stringify(data));
 };
 
-const callService = async function (brokerContext, prevShared, address, args = {}, shared = {}) {
+const mapFileCursor = function(obj) {
+  let results = [];
+
+  for (let key in obj) {
+    if (obj[key] instanceof FileCursor) {
+      results.push({
+        path: key,
+        value: obj[key],
+      });
+
+      delete obj[key];
+      continue;
+    }
+
+    if (obj[key] && typeof obj[key] === 'object'){
+      results = [
+        ...results,
+        ...mapFileCursor(obj[key]).map(i => ({ path: [key, ...i.path], value: i.value }))
+      ];
+    }
+  }
+
+  return results;
+}
+
+const callService = async function (brokerContext, address, args = {}) {
   if (!brokerContext[address]) { throw new ServiceError(`Invalid action address "${address}"`); }
 
   const instance = brokerContext[address];
@@ -73,24 +97,31 @@ const callService = async function (brokerContext, prevShared, address, args = {
 
   const { service, before: beforeFns, after: afterFns, error: errorFns, action } = instance;
 
-  const nextShared = mergeDeepLeft(shared, prevShared);
-  const nextArgs = clone(mergeDeepLeft(args, nextShared));
-  const nextCall = curryN(3, callService)(brokerContext, nextShared);
+  const nextArgs = clone(args);
+  // const fileCursors = mapFileCursor(nextArgs);
 
   try {
-    let res = await runHooks(service, beforeFns, nextArgs, nextCall);
+    let res = await runHooks(service, beforeFns, nextArgs);
     if (res !== undefined) { return serialize(res); }
 
-    res = await action.bind(service)(nextArgs, nextCall);
+    res = await action.bind(service)(nextArgs);
 
-    const newRes = await runHooks(service, afterFns, res, nextArgs, nextCall);
-    return serialize(newRes || res);
+    const newRes = await runHooks(service, afterFns, res, nextArgs);
+
+    let returnRes = newRes || res;
+    const fileCursors = mapFileCursor(returnRes);
+    returnRes = serialize(returnRes);
+
+    for (let cursor of fileCursors)
+      returnRes = set(lensPath(cursor.path), cursor.value, returnRes);
+
+    return returnRes;
   } catch (err) {
     let newErr = err;
 
     try {
       // try hook to get value again
-      const errRes = await runHooks(service, errorFns, err, nextArgs, nextCall);
+      const errRes = await runHooks(service, errorFns, err, nextArgs);
       if (!errRes) { // hook does not have any response
         throw err;
       } // continue error
@@ -121,42 +152,6 @@ const createLogger = function (service) {
     name: service.name
   });
 };
-
-const putToService = async function(brokerContext, address, args = {}) {
-  const nextArgs = {...args};
-  const { data } = nextArgs;
-
-  if (!data)
-    throw new RugoException('Put need data to get file.');
-
-  delete nextArgs.data;
-
-  if (typeof data !== 'string')
-    throw new RugoException('Currently, data should be string, not support any others.');
-
-  const filePath = join('/', data);
-
-  if (!existsSync(filePath))
-    throw new RugoException('File not found');
-
-  nextArgs.path = filePath;
-
-  return await callService(brokerContext, {}, address, nextArgs);
-}
-
-const getFromService = async function(brokerContext, address, args = {}) {
-  const tmpPath = await callService(brokerContext, {}, address, args);
-
-  if (tmpPath === true)
-    return tmpPath;
-
-  const filePath = join('/', tmpPath);
-
-  if (!existsSync(filePath))
-    throw new RugoException('File not found');
-
-  return filePath;
-}
 
 export const createService = function (brokerContext, serviceConfig) {
   // basic
@@ -189,9 +184,7 @@ export const createService = function (brokerContext, serviceConfig) {
   }
 
   // add funcs
-  service.call = curryN(3, callService)(brokerContext, {});
-  service.put = curryN(2, putToService)(brokerContext);
-  service.get = curryN(2, getFromService)(brokerContext);
+  service.call = curryN(2, callService)(brokerContext);
 
   // add log
   service.logger = createLogger(service);

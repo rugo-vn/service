@@ -1,47 +1,22 @@
 /* eslint-disable */
 
-import { join, dirname } from 'path';
+import { expect } from 'chai';
+import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-import { assert, expect } from 'chai';
-import { createBroker } from '../src/broker.js';
+import { FileCursor } from '../src/file.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe('File test', () => {
-  it('should transfer file', async () => {
-    const sampleFilePath = join(__dirname, './sample.service.js');
-    const broker = createBroker();
+  it('should create FileCursor', async () => {
+    const fc = FileCursor('some data');
+    expect(`${fc}`.substring(0, 5)).to.be.eq('/tmp/');
 
-    let result = '';
-    broker.createService({
-      name: 'receiver',
+    expect(fc.toText()).to.be.eq('some data');
+    expect(fc.toStream().constructor.name).to.be.eq('ReadStream');
 
-      actions: {
-        async put({ path: tmpPath }) {
-          result += tmpPath;
-          return 'ok';
-        },
-
-        async get() {
-          return sampleFilePath;
-        }
-      }
-    });
-
-    // start
-    await broker.start();
-
-    // put file
-    const res = await broker.put('receiver.put', { data: sampleFilePath });
-    expect(res).to.be.eq('ok');
-
-    // get file
-    const res2 = await broker.get('receiver.get');
-    expect(res2).to.be.eq(sampleFilePath);
-
-    expect(result).to.be.eq(sampleFilePath);
-
-    // close
-    await broker.close();
+    const filePath = join(__dirname, './rugo.config.js');
+    const fc2 = FileCursor(filePath);
+    expect(`${fc2}`).to.be.eq(filePath);
   });
 });

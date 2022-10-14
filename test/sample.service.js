@@ -21,6 +21,9 @@ export const actions = {
     this.logger.info('add operation');
     return a + b;
   },
+  file(args){
+    return args;
+  },
   getSettings () {
     return this.settings;
   },

@@ -1,6 +1,6 @@
 {
   "name": "@rugo-vn/service",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Microservice infrastructure",
   "bin": {
     "start": "src/start.js"
@@ -24,7 +24,8 @@
     "node-emoji": "^1.11.0",
     "pino": "^8.6.0",
     "pino-pretty": "^9.1.0",
-    "ramda": "^0.28.0"
+    "ramda": "^0.28.0",
+    "temp": "^0.9.4"
   },
   "devDependencies": {
     "c8": "^7.12.0",
