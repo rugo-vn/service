@@ -1,5 +1,5 @@
-import { join, resolve } from 'path';
-import { flatten, mergeDeepLeft, curryN, clone, path, call, set, lensPath } from 'ramda';
+import { resolve } from 'path';
+import { flatten, curryN, clone, set, lensPath } from 'ramda';
 import { RugoException, ServiceError } from './exception.js';
 import { FileCursor } from './file.js';
 import pino from 'pino';
@@ -64,21 +64,23 @@ const serialize = function (data) {
   return JSON.parse(JSON.stringify(data));
 };
 
-const mapFileCursor = function(obj) {
+const mapFileCursor = function (obj) {
   let results = [];
-
+  const isArray = Array.isArray(obj);
   for (let key in obj) {
+    if (isArray) { key = parseInt(key); }
+
     if (obj[key] instanceof FileCursor) {
       results.push({
-        path: key,
-        value: obj[key],
+        path: [key],
+        value: obj[key]
       });
 
       delete obj[key];
       continue;
     }
 
-    if (obj[key] && typeof obj[key] === 'object'){
+    if (obj[key] && typeof obj[key] === 'object') {
       results = [
         ...results,
         ...mapFileCursor(obj[key]).map(i => ({ path: [key, ...i.path], value: i.value }))
@@ -87,7 +89,7 @@ const mapFileCursor = function(obj) {
   }
 
   return results;
-}
+};
 
 const callService = async function (brokerContext, address, args = {}) {
   if (!brokerContext[address]) { throw new ServiceError(`Invalid action address "${address}"`); }
@@ -109,11 +111,19 @@ const callService = async function (brokerContext, address, args = {}) {
     const newRes = await runHooks(service, afterFns, res, nextArgs);
 
     let returnRes = newRes || res;
+
+    if (!returnRes) { return returnRes; }
+
+    if (typeof returnRes !== 'object') { return returnRes; }
+
+    if (returnRes instanceof FileCursor) { return returnRes; }
+
     const fileCursors = mapFileCursor(returnRes);
     returnRes = serialize(returnRes);
 
-    for (let cursor of fileCursors)
+    for (const cursor of fileCursors) {
       returnRes = set(lensPath(cursor.path), cursor.value, returnRes);
+    }
 
     return returnRes;
   } catch (err) {
