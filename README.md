@@ -134,6 +134,54 @@ Methods:
 
 Toàn bộ các exception của framework và các service nên/sẽ được đóng gói dưới dạng `RugoException`. Đây là một class chứa nhiều thông tin hơn class `Error` bình thường, ta có thể trực tiếp trả về các lỗi HTTP mà không cần xử lý phức tạp.
 
+## Broker Service
+
+_Source Service_
+
+### Giới thiệu
+
+Đây là một service đặc biệt, dùng để thiết lập môi trường cho các service hoạt động và tiến hành khởi tạo service.
+
+```js
+const broker = createBroker(settings); 
+
+const service = broker.createService(serviceDefine);
+
+await broker.loadServices();
+
+await broker.start(); /* chạy toàn bộ hàm start của các service */
+await broker.close(); /* chạy toàn bộ hàm close của các service */
+```
+
+### Settings
+
+```js
+const settings = {
+  _broker: {
+    services: [
+      '/path/to/service',
+      /* ... */
+    ],
+  }
+}
+```
+
+### Actions
+
+#### `services`
+
+Trả về danh sách tên các service hoạt động trong môi trường của broker.
+
+### Methods
+
+#### `createService`
+
+#### `loadService`
+
+### Script
+
+Ta có thể chạy script `./src/start.js` để tự động chạy broker service với settings được đọc từ tập tin `rugo.config.js` và file `.env`.
+
 ## License
 	
 MIT.
