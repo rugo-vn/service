@@ -163,12 +163,23 @@ const createLogger = function (service) {
   });
 };
 
-export const createService = function (brokerContext, serviceConfig) {
+export const createService = function (context, serviceConfig) {
+  // init
+  context.addresses ||= {};
+  context.globals ||= {};
+
+  const brokerContext = context.addresses;
+
   // basic
   const service = {
     name: serviceConfig.name,
     settings: serviceConfig.settings || {}
   };
+
+  Object.defineProperty(service, 'globals', {
+    value: context.globals,
+    writable: false
+  });
 
   // add methods
   for (const name in serviceConfig.methods || {}) {

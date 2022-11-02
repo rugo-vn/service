@@ -76,9 +76,11 @@ const context = {};
 const service = createService(context, serviceDefine);
 ```
 
-Hàm tạo này sẽ đóng gói các action trong object định nghĩa đi kèm các hook và ghi vào `context` với key là địa chỉ của action (`${tên service}.${tên action}`), để tiện cho việc gọi sau này. Đồng thời nó còn bind các hàm gọi, các hàm được định nghĩa trong `methods` cho service.
+Hàm tạo này sẽ đóng gói các action trong object định nghĩa đi kèm các hook và ghi vào `context.addresses` với key là địa chỉ của action (`${tên service}.${tên action}`), để tiện cho việc gọi sau này. Đồng thời nó còn bind các hàm gọi, các hàm được định nghĩa trong `methods` cho service.
 
 Các service có cùng `context` có thể gọi lẫn nhau.
+
+Các service chia sẻ một biến toàn cầu `context.globals` tại `this.globals`.
 
 ### Bắt đầu và kết thúc
 
@@ -105,6 +107,16 @@ const res = await service.call(address, args);
 ```
 
 Về cơ bản `args` sẽ được gửi đến tham số thứ nhất của action, và kết quả `res` là kết quả trả về của action.
+
+### Global variable
+
+Biến toàn cầu được sử dụng để chia sẻ dữ liệu giữa các service một cách dễ dàng.
+
+```js
+const value = service.globals[key];
+
+service.globals[key] = value;
+```
 
 ### FileCursor
 
@@ -157,11 +169,12 @@ await broker.close(); /* chạy toàn bộ hàm close của các service */
 
 ```js
 const settings = {
-  _broker: {
-    services: [
-      '/path/to/service',
-      /* ... */
-    ],
+  _services: [
+    '/path/to/service',
+    /* ... */
+  ],
+  _globals: {
+    /* global variables */
   }
 }
 ```

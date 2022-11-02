@@ -99,4 +99,23 @@ describe('Service test', () => {
       expect(err).to.has.property('message', 'Conflict action name "demo.name"');
     }
   });
+
+  it('should access global variable', async () => {
+    const context = {};
+
+    const fooService = createService(context, { name: 'foo', actions: { put() { this.globals['name'] = 'rugo'; }, error(){ this.globals = {} }}});
+    const barService = createService(context, { name: 'bar', actions: { get() { return this.globals; }}});
+
+    await fooService.call('foo.put');
+    const res = await barService.call('bar.get');
+
+    expect(res).to.has.property('name', 'rugo');
+
+    try {
+      await fooService.call('foo.error');
+      assert.fail('should throw error');
+    } catch(errs) {
+      expect(errs[0]).to.has.property('message', `Cannot assign to read only property 'globals' of object '#<Object>'`);
+    }
+  });
 });

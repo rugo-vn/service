@@ -39,6 +39,11 @@ const brokerConfig = {
   },
 
   async started () {
+    const globals = this.settings._globals || {};
+    for (const key in globals) {
+      this.globals[key] = globals[key];
+    }
+
     for (const service of this.services) {
       const ltime = Date.now();
       await service.start();
