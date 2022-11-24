@@ -1,6 +1,6 @@
 import { resolve } from 'path';
 import { flatten, curryN, clone, set, lensPath } from 'ramda';
-import { RugoException, ServiceError } from './exception.js';
+import { RugoException, ServiceError } from '@rugo-vn/exception';
 import { FileCursor } from './file.js';
 import pino from 'pino';
 import pretty from 'pino-pretty';

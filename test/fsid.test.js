@@ -1,6 +1,6 @@
 /* eslint-disable */
 
-import { RugoException } from '../src/exception.js';
+import { RugoException } from '@rugo-vn/exception';
 import { expect, assert } from 'chai';
 
 import { FsId } from '../src/file.js';

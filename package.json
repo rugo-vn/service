@@ -18,6 +18,7 @@
     "coverage": "c8 npm run test"
   },
   "dependencies": {
+    "@rugo-vn/exception": "../exception",
     "camelcase": "^7.0.0",
     "colors": "^1.4.0",
     "dotenv": "^16.0.1",

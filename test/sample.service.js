@@ -1,6 +1,6 @@
 /* eslint-disable */
 
-import { RugoException, ServiceError } from "../src/index.js";
+import { RugoException, ServiceError } from "@rugo-vn/exception";
 
 export const name = 'sample';
 

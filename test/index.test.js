@@ -1,8 +1,10 @@
 /* eslint-disable */
 
 import { assert, expect } from 'chai';
+import { RugoException, ServiceError } from '@rugo-vn/exception';
+
 import { FileCursor } from '../src/file.js';
-import { createBroker, RugoException, ServiceError } from '../src/index.js';
+import { createBroker } from '../src/index.js';
 import * as sample from './sample.service.js';
 
 describe('Rugo service test', () => {

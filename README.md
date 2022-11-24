@@ -1,13 +1,24 @@
 # Rugo Service
 
-_Framework tạo service cho hệ thống microservice._
+Base for microservice system - Unit to build Rugo Platform.
 
-## Cấu trúc service
+## Concept
 
-Một service được định nghĩa có cấu trúc như sau:
+- `system` is an entire program, which run by node command.
+- The `system` is devided into units, called `service`.
+- `service` identity is `name`. It's a unique value.
+- Super `service` to create, load and start other services, callced `broker`.
+- Services were created by same `broker`, called `scope`.
+- In `scope`, every services share a same variable called `globals`. You can access `globals` anywhere from the service through `this.globals`.
+- In `scope`, every services can be execute functions from another service by `call` method, which can access anywhere in the service through `this.call`.
+- In `service`, you can bind functions to `this`, these functions called `method`.
+- `this.call` will call a function, called `action`. The call must have a `address` of the `action` you want to execute by format `<name>.<action>`.
+- You can bind functions before, after and when error occur by `hooks`.
+
+## Service Structure
 
 ```js
-{
+const serviceDefine = {
   name: /* ... */,
   settings: {
     /* ... */
@@ -62,6 +73,34 @@ Một service được định nghĩa có cấu trúc như sau:
 }
 ```
 
+## Usage
+
+```js
+const settings = {
+  _services: [
+    '/path/to/service',
+    /* ... */
+  ],
+  _globals: {
+    /* global variables */
+  }
+}
+
+const broker = createBroker(settings); 
+
+const service = broker.createService(serviceDefine);
+
+await broker.loadServices();
+
+await broker.start();
+await broker.close();
+```
+
+## License
+	
+MIT.
+
+<!-- 
 ## Hoạt động của service
 
 ### Tạo service
@@ -154,31 +193,6 @@ _Source Service_
 
 Đây là một service đặc biệt, dùng để thiết lập môi trường cho các service hoạt động và tiến hành khởi tạo service.
 
-```js
-const broker = createBroker(settings); 
-
-const service = broker.createService(serviceDefine);
-
-await broker.loadServices();
-
-await broker.start(); /* chạy toàn bộ hàm start của các service */
-await broker.close(); /* chạy toàn bộ hàm close của các service */
-```
-
-### Settings
-
-```js
-const settings = {
-  _services: [
-    '/path/to/service',
-    /* ... */
-  ],
-  _globals: {
-    /* global variables */
-  }
-}
-```
-
 ### Actions
 
 #### `services`
@@ -195,6 +209,13 @@ Trả về danh sách tên các service hoạt động trong môi trường củ
 
 Ta có thể chạy script `./src/start.js` để tự động chạy broker service với settings được đọc từ tập tin `rugo.config.js` và file `.env`.
 
-## License
-	
-MIT.
+## Utils
+
+### exec
+
+Execute bash command.
+
+### schema
+
+
+ -->

@@ -6,7 +6,7 @@ import { createReadStream, existsSync, readFileSync, writeFileSync } from 'fs';
 import { copyFile } from 'node:fs/promises';
 import { path } from 'ramda';
 
-import { RugoException } from './exception.js';
+import { RugoException } from '@rugo-vn/exception';
 
 const INVALID_PATH_REGEX = /[<>:"\\|?*\u0000-\u001F]/g; // eslint-disable-line
 
