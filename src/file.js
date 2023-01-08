@@ -25,8 +25,7 @@ export function FileCursor (data) {
 
   let filePath = join('/', data);
   if (!existsSync(filePath)) {
-    filePath = temp.path({ suffix: '.txt', prefix: 'rugo-' });
-    writeFileSync(filePath, data);
+    throw new RugoException('File not found.');
   }
 
   this._path = filePath;

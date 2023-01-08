@@ -139,9 +139,9 @@ const callService = async function (brokerContext, address, args = {}) {
       return serialize(errRes);
     } catch (e) { newErr = e; }
 
-    if (!Array.isArray(newErr)) { newErr = [newErr]; }
+    if (Array.isArray(newErr)) { newErr = newErr[0]; }
 
-    throw newErr.map((e) => e instanceof RugoException ? e : new RugoException(e.message));
+    throw newErr instanceof RugoException ? newErr : new RugoException(newErr.message);
   }
 };
 
