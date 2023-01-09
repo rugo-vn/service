@@ -9,8 +9,6 @@
   "type": "module",
   "scripts": {
     "start": "node src/start.js",
-    "doc": "jsdoc2md **/*.js > docs/API.md",
-    "readme": "readme generate",
     "lint:check": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint": "npm run lint:fix",
@@ -18,7 +16,8 @@
     "coverage": "c8 npm run test"
   },
   "dependencies": {
-    "@rugo-vn/exception": "../exception",
+    "@rugo-vn/exception": "^1.0.0",
+    "base64url": "^3.0.1",
     "camelcase": "^7.0.0",
     "colors": "^1.4.0",
     "dotenv": "^16.0.1",
@@ -26,16 +25,13 @@
     "pino": "^8.6.0",
     "pino-pretty": "^9.1.0",
     "ramda": "^0.28.0",
-    "temp": "^0.9.4",
-    "base64url": "^3.0.1"
+    "temp": "^0.9.4"
   },
   "devDependencies": {
     "c8": "^7.12.0",
     "chai": "^4.3.6",
     "eslint": "^8.20.0",
     "eslint-config-standard": "^17.0.0",
-    "eslint-plugin-jsdoc": "^39.3.3",
-    "jsdoc-to-markdown": "^7.1.1",
     "mocha": "^10.0.0"
   },
   "author": "Vu Anh Hao <hi@haova.me> (https://www.haova.me)",
