@@ -1,8 +1,7 @@
-import temp from 'temp';
 import base64url from 'base64url';
 
 import { join } from 'path';
-import { createReadStream, existsSync, readFileSync, writeFileSync } from 'fs';
+import { createReadStream, existsSync, readFileSync } from 'fs';
 import { copyFile } from 'node:fs/promises';
 import { path } from 'ramda';
 
@@ -10,20 +9,24 @@ import { RugoException } from '@rugo-vn/exception';
 
 const INVALID_PATH_REGEX = /[<>:"\\|?*\u0000-\u001F]/g; // eslint-disable-line
 
-/**
- *
- * @param data
- */
-export function FileCursor (data) {
-  if (!(this instanceof FileCursor)) { return new FileCursor(data); }
+export function FileCursor(data) {
+  if (!(this instanceof FileCursor)) {
+    return new FileCursor(data);
+  }
 
-  if (!data) { throw new RugoException('FileCursor need data info'); }
+  if (!data) {
+    throw new RugoException('FileCursor need data info');
+  }
 
   if (data instanceof FileCursor) return new FileCursor(data._path);
 
-  if (typeof data !== 'string') { throw new RugoException('Currently, data should be string, not support any others.'); }
+  if (typeof data !== 'string') {
+    throw new RugoException(
+      'Currently, data should be string, not support any others.'
+    );
+  }
 
-  let filePath = join('/', data);
+  const filePath = join('/', data);
   if (!existsSync(filePath)) {
     throw new RugoException('File not found.');
   }
@@ -64,8 +67,10 @@ FileCursor.prototype.copyTo = function (toPath) {
  *
  * @param inputId
  */
-export function FsId (inputId) {
-  if (!(this instanceof FsId)) { return new FsId(inputId); }
+export function FsId(inputId) {
+  if (!(this instanceof FsId)) {
+    return new FsId(inputId);
+  }
 
   let workingId;
 
@@ -79,7 +84,9 @@ export function FsId (inputId) {
     workingId = inputId;
   }
 
-  if (typeof workingId !== 'string') { workingId = ''; }
+  if (typeof workingId !== 'string') {
+    workingId = '';
+  }
 
   // try decode path
   const decodedId = base64url.decode(workingId);

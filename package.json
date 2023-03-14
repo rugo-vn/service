@@ -9,9 +9,6 @@
   "type": "module",
   "scripts": {
     "start": "node src/start.js",
-    "lint:check": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "lint": "npm run lint:fix",
     "test": "mocha",
     "coverage": "c8 npm run test"
   },
@@ -22,7 +19,8 @@
     "colors": "^1.4.0",
     "dotenv": "^16.0.1",
     "node-emoji": "^1.11.0",
-    "pino": "^8.6.0",
+    "pino": "^8.11.0",
+    "pino-inspector": "^0.1.0",
     "pino-pretty": "^9.1.0",
     "ramda": "^0.28.0",
     "temp": "^0.9.4"
@@ -30,8 +28,6 @@
   "devDependencies": {
     "c8": "^7.12.0",
     "chai": "^4.3.6",
-    "eslint": "^8.20.0",
-    "eslint-config-standard": "^17.0.0",
     "mocha": "^10.0.0"
   },
   "author": "Vu Anh Hao <hi@haova.me> (https://www.haova.me)",

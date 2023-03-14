@@ -1,7 +1,9 @@
 /* eslint-disable */
 
 import { expect } from 'chai';
+import { writeFileSync } from 'fs';
 import { dirname, join } from 'path';
+import temp from 'temp';
 import { fileURLToPath } from 'url';
 import { FileCursor } from '../src/file.js';
 
@@ -9,7 +11,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe('File test', () => {
   it('should create FileCursor', async () => {
-    const fc = FileCursor('some data');
+    const tempName = temp.path({ suffix: '.txt' });
+    writeFileSync(tempName, 'some data');
+
+    const fc = FileCursor(tempName);
     expect(`${fc}`.substring(0, 5)).to.be.eq('/tmp/');
 
     expect(fc.toText()).to.be.eq('some data');

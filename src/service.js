@@ -2,47 +2,86 @@ import { resolve } from 'path';
 import { flatten, curryN, clone, set, lensPath } from 'ramda';
 import { RugoException, ServiceError } from '@rugo-vn/exception';
 import { FileCursor } from './file.js';
+import process from 'process';
 import pino from 'pino';
 import pretty from 'pino-pretty';
+import pinoInspector from 'pino-inspector';
 import colors from 'colors';
+import { createLogger } from './utils.js';
 
-const BLACK_NAMES = ['name', 'settings', 'methods', 'actions', 'hooks', 'start', 'started', 'close', 'closed', 'call', 'all'];
+const BLACK_NAMES = [
+  'name',
+  'settings',
+  'methods',
+  'actions',
+  'hooks',
+  'start',
+  'started',
+  'close',
+  'closed',
+  'call',
+  'all',
+];
+
+const DEBUG = process.env.DEBUG;
 
 const getHookFn = function (def, methods) {
-  if (typeof def === 'function') { return [def]; }
+  if (typeof def === 'function') {
+    return [def];
+  }
 
-  if (typeof def === 'string' && methods[def]) { return [methods[def]]; }
+  if (typeof def === 'string' && methods[def]) {
+    return [methods[def]];
+  }
 
-  if (Array.isArray(def)) { return flatten(def.map(df => getHookFn(df, methods))); }
+  if (Array.isArray(def)) {
+    return flatten(def.map((df) => getHookFn(df, methods)));
+  }
 
   throw new ServiceError(`Hook method "${def}" is not found.`);
 };
 
-const wrapAction = function ({ methods = {}, hooks = {} } = {}, action, service) {
+const wrapAction = function (
+  { methods = {}, hooks = {} } = {},
+  action,
+  service
+) {
   const actionName = action.name;
 
   const instance = {
     type: 'local',
     action,
-    service
+    service,
   };
 
   // before
   let fns = [];
-  if (hooks.before && hooks.before.all) { fns.push(getHookFn(hooks.before.all, methods)); }
-  if (hooks.before && hooks.before[actionName]) { fns.push(getHookFn(hooks.before[actionName], methods)); }
+  if (hooks.before && hooks.before.all) {
+    fns.push(getHookFn(hooks.before.all, methods));
+  }
+  if (hooks.before && hooks.before[actionName]) {
+    fns.push(getHookFn(hooks.before[actionName], methods));
+  }
   instance.before = flatten(fns);
 
   // after
   fns = [];
-  if (hooks.after && hooks.after[actionName]) { fns.push(getHookFn(hooks.after[actionName], methods)); }
-  if (hooks.after && hooks.after.all) { fns.push(getHookFn(hooks.after.all, methods)); }
+  if (hooks.after && hooks.after[actionName]) {
+    fns.push(getHookFn(hooks.after[actionName], methods));
+  }
+  if (hooks.after && hooks.after.all) {
+    fns.push(getHookFn(hooks.after.all, methods));
+  }
   instance.after = flatten(fns);
 
   // error
   fns = [];
-  if (hooks.error && hooks.error[actionName]) { fns.push(getHookFn(hooks.error[actionName], methods)); }
-  if (hooks.error && hooks.error.all) { fns.push(getHookFn(hooks.error.all, methods)); }
+  if (hooks.error && hooks.error[actionName]) {
+    fns.push(getHookFn(hooks.error[actionName], methods));
+  }
+  if (hooks.error && hooks.error.all) {
+    fns.push(getHookFn(hooks.error.all, methods));
+  }
   instance.error = flatten(fns);
 
   return instance;
@@ -51,15 +90,21 @@ const wrapAction = function ({ methods = {}, hooks = {} } = {}, action, service)
 const runHooks = async function (service, fns, ...args) {
   for (const fn of fns) {
     const fnRes = await fn.bind(service)(...args);
-    if (fnRes !== undefined) { return fnRes; }
+    if (fnRes !== undefined) {
+      return fnRes;
+    }
   }
   return undefined;
 };
 
 const serialize = function (data) {
-  if (typeof data === 'string' || typeof data === 'number') { return data; }
+  if (typeof data === 'string' || typeof data === 'number') {
+    return data;
+  }
 
-  if (!data) { return data; }
+  if (!data) {
+    return data;
+  }
 
   return JSON.parse(JSON.stringify(data));
 };
@@ -68,12 +113,14 @@ const mapFileCursor = function (obj) {
   let results = [];
   const isArray = Array.isArray(obj);
   for (let key in obj) {
-    if (isArray) { key = parseInt(key); }
+    if (isArray) {
+      key = parseInt(key);
+    }
 
     if (obj[key] instanceof FileCursor) {
       results.push({
         path: [key],
-        value: obj[key]
+        value: obj[key],
       });
 
       delete obj[key];
@@ -83,7 +130,10 @@ const mapFileCursor = function (obj) {
     if (obj[key] && typeof obj[key] === 'object') {
       results = [
         ...results,
-        ...mapFileCursor(obj[key]).map(i => ({ path: [key, ...i.path], value: i.value }))
+        ...mapFileCursor(obj[key]).map((i) => ({
+          path: [key, ...i.path],
+          value: i.value,
+        })),
       ];
     }
   }
@@ -92,19 +142,34 @@ const mapFileCursor = function (obj) {
 };
 
 const callService = async function (brokerContext, address, args = {}) {
-  if (!brokerContext[address]) { throw new ServiceError(`Invalid action address "${address}"`); }
+  if (!brokerContext[address]) {
+    throw new ServiceError(`Invalid action address "${address}"`);
+  }
+
+  if (DEBUG)
+    this.logger.debug(`Call: ${colors.white(address)} ${JSON.stringify(args)}`);
 
   const instance = brokerContext[address];
-  if (instance.type !== 'local') { throw new ServiceError(`Do not support action type "${instance.type}"`); }
+  if (instance.type !== 'local') {
+    throw new ServiceError(`Do not support action type "${instance.type}"`);
+  }
 
-  const { service, before: beforeFns, after: afterFns, error: errorFns, action } = instance;
+  const {
+    service,
+    before: beforeFns,
+    after: afterFns,
+    error: errorFns,
+    action,
+  } = instance;
 
   const nextArgs = clone(args);
   // const fileCursors = mapFileCursor(nextArgs);
 
   try {
     let res = await runHooks(service, beforeFns, nextArgs);
-    if (res !== undefined) { return serialize(res); }
+    if (res !== undefined) {
+      return serialize(res);
+    }
 
     res = await action.bind(service)(nextArgs);
 
@@ -112,11 +177,17 @@ const callService = async function (brokerContext, address, args = {}) {
 
     let returnRes = newRes || res;
 
-    if (!returnRes) { return returnRes; }
+    if (!returnRes) {
+      return returnRes;
+    }
 
-    if (typeof returnRes !== 'object') { return returnRes; }
+    if (typeof returnRes !== 'object') {
+      return returnRes;
+    }
 
-    if (returnRes instanceof FileCursor) { return returnRes; }
+    if (returnRes instanceof FileCursor) {
+      return returnRes;
+    }
 
     const fileCursors = mapFileCursor(returnRes);
     returnRes = serialize(returnRes);
@@ -132,35 +203,29 @@ const callService = async function (brokerContext, address, args = {}) {
     try {
       // try hook to get value again
       const errRes = await runHooks(service, errorFns, err, nextArgs);
-      if (!errRes) { // hook does not have any response
+      if (!errRes) {
+        // hook does not have any response
         throw err;
       } // continue error
 
       return serialize(errRes);
-    } catch (e) { newErr = e; }
-
-    if (Array.isArray(newErr)) { newErr = newErr[0]; }
-
-    throw newErr instanceof RugoException ? newErr : new RugoException(newErr.message);
-  }
-};
-
-const createLogger = function (service) {
-  return pino(pretty({
-    colorize: true,
-    ignore: 'pid,hostname',
-    customPrettifiers: {
-      name (name) {
-        if (name[0] === '_') { // system service
-          return colors.red(name.substring(1));
-        }
-
-        return name;
-      }
+    } catch (e) {
+      newErr = e;
     }
-  })).child({
-    name: service.name
-  });
+
+    if (Array.isArray(newErr)) {
+      newErr = newErr[0];
+    }
+
+    const nextErr =
+      newErr instanceof RugoException
+        ? newErr
+        : new RugoException(newErr.message);
+
+    nextErr.stack = newErr.stack;
+
+    throw nextErr;
+  }
 };
 
 export const createService = function (context, serviceConfig) {
@@ -173,12 +238,12 @@ export const createService = function (context, serviceConfig) {
   // basic
   const service = {
     name: serviceConfig.name,
-    settings: serviceConfig.settings || {}
+    settings: serviceConfig.settings || {},
   };
 
   Object.defineProperty(service, 'globals', {
     value: context.globals,
-    writable: false
+    writable: false,
   });
 
   // add methods
@@ -208,12 +273,14 @@ export const createService = function (context, serviceConfig) {
   service.call = curryN(2, callService)(brokerContext);
 
   // add log
-  service.logger = createLogger(service);
+  service.logger = createLogger(service.name);
 
   // add start & close
   const proxyService = { ...service };
-  proxyService.start = async () => await (serviceConfig.started || function () {}).bind(service)();
-  proxyService.close = async () => await (serviceConfig.closed || function () {}).bind(service)();
+  proxyService.start = async () =>
+    await (serviceConfig.started || function () {}).bind(service)();
+  proxyService.close = async () =>
+    await (serviceConfig.closed || function () {}).bind(service)();
 
   return proxyService;
 };

@@ -2,10 +2,14 @@
 
 import { assert, expect } from 'chai';
 import { RugoException, ServiceError } from '@rugo-vn/exception';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 
 import { FileCursor } from '../src/file.js';
 import { createBroker } from '../src/index.js';
 import * as sample from './sample.service.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe('Rugo service test', () => {
   it('should simple run in file', async () => {
@@ -45,7 +49,10 @@ describe('Rugo service test', () => {
       await broker.call('sample.subtract', { a: 1, b: 2 });
       assert.fail();
     } catch (e) {
-      expect(e).to.has.property('message', 'Invalid action address "sample.subtract"');
+      expect(e).to.has.property(
+        'message',
+        'Invalid action address "sample.subtract"'
+      );
     }
 
     await broker.close();
@@ -69,12 +76,16 @@ describe('Rugo service test', () => {
     broker.createService({
       name: 'foo',
       actions: {
-        test(){ return this.speak(); }
+        test() {
+          return this.speak();
+        },
       },
       methods: {
-        speak(){ return 'meow'; }
-      }
-    })
+        speak() {
+          return 'meow';
+        },
+      },
+    });
 
     await broker.start();
 
@@ -89,40 +100,48 @@ describe('Rugo service test', () => {
     broker.createService({
       name: 'foo',
       actions: {
-        cat({ prefix }){ return prefix + ' meow '; },
-        dog({ prefix }){ return prefix + ' growl '; },
-        async cow({ prefix }){ return prefix + ' moo '; },
-        sheep({ prefix }){ return prefix + ' baaa '; }
+        cat({ prefix }) {
+          return prefix + ' meow ';
+        },
+        dog({ prefix }) {
+          return prefix + ' growl ';
+        },
+        async cow({ prefix }) {
+          return prefix + ' moo ';
+        },
+        sheep({ prefix }) {
+          return prefix + ' baaa ';
+        },
       },
       hooks: {
         before: {
-          all(args){
-            args.prefix = 'Kitty'
+          all(args) {
+            args.prefix = 'Kitty';
           },
 
           dog: 'addName',
           cow: ['addName'],
 
-          sheep(){
+          sheep() {
             return 'slient';
-          }
+          },
         },
         after: {
-          async all(res){
+          async all(res) {
             return res + '--';
           },
 
-          cow(res){
+          cow(res) {
             return res + '++';
-          }
-        }
+          },
+        },
       },
       methods: {
-        addName(args){
+        addName(args) {
           args.prefix = 'Rich';
-        }
-      }
-    })
+        },
+      },
+    });
 
     await broker.start();
 
@@ -142,28 +161,28 @@ describe('Rugo service test', () => {
 
     try {
       await broker.call('sample.throwError');
-      assert.fail('should error')
-    } catch (err){
-      expect(err[0] instanceof RugoException).to.be.eq(true);
-      expect(err[0]).to.has.property('status', 400);
+      assert.fail('should error');
+    } catch (err) {
+      expect(err instanceof RugoException).to.be.eq(true);
+      expect(err).to.has.property('status', 400);
     }
 
     try {
       await broker.call('sample.throwRugoException');
-      assert.fail('should error')
-    } catch (err){
-      expect(err[0] instanceof RugoException).to.be.eq(true);
-      expect(err[0]).to.has.property('status', 400);
+      assert.fail('should error');
+    } catch (err) {
+      expect(err instanceof RugoException).to.be.eq(true);
+      expect(err).to.has.property('status', 400);
     }
 
     try {
       await broker.call('sample.throwServiceError');
-      assert.fail('should error')
-    } catch (err){
-      expect(err[0] instanceof RugoException).to.be.eq(true);
-      expect(err[0] instanceof ServiceError).to.be.eq(true);
+      assert.fail('should error');
+    } catch (err) {
+      expect(err instanceof RugoException).to.be.eq(true);
+      expect(err instanceof ServiceError).to.be.eq(true);
 
-      expect(err[0]).to.has.property('status', 500);
+      expect(err).to.has.property('status', 500);
     }
 
     await broker.close();
@@ -177,9 +196,11 @@ describe('Rugo service test', () => {
 
     // simple add
     const result = await broker.call('sample.file', {
-      a: 1, b: 2, c: { d: FileCursor('Hello World') }
+      a: 1,
+      b: 2,
+      c: { d: FileCursor(join(__dirname, '../package.json')) },
     });
-    
+
     expect(result).to.has.property('a', 1);
     expect(result).to.has.property('b', 2);
     expect(result).to.has.property('c');
