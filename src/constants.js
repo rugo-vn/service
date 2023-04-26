@@ -6,3 +6,15 @@ export const LOGGER_LEVELS = {
   error: 50,
   fatal: 60,
 };
+
+export const STATUSES = {
+  online: 1,
+  offline: 0,
+};
+
+export const COM_PREFIX = 'data:';
+export const COM_SEP = ':';
+
+export const COM_ACTIONS = {
+  reply: 'reply',
+};

@@ -4,6 +4,97 @@ Base for microservice system - Unit to build Rugo Platform.
 
 ## Concept
 
+### Service
+
+Service is a basic unit in Rugo Platform.
+
+It can be write in any programming language.
+
+It's an independent process managed by broker.
+
+To spawn a service, do:
+
+```js
+import { spawnService } from '@rugo-vn/service';
+
+const service = spawnService(definition);
+```
+
+Below is an example of `definition` structure:
+
+```js
+const serviceDefine = {
+  /* required */
+  name: 'service-name',
+  exec: ['python', 'app.py'],
+
+  /* optional */
+  cwd: '/path/to/source/code',
+  settings: {
+    /* key-value settings */
+  },
+  actions: [],
+};
+```
+
+If your service managed by a centralization control service, you can pass config action of that service to settings:
+
+```js
+const serviceDefine = {
+  name: 'service-name',
+  settings: 'control.config' /* await config action from control service */,
+};
+```
+
+To start the service, run:
+
+```js
+await service.start();
+```
+
+To stop the service, run:
+
+```js
+await service.stop();
+```
+
+### Communication
+
+Between NodeJS process and Service process, we define a communication channel.
+
+From NodeJS to Service:
+
+```text
+data:{msgId}:{actionName}:{args}:{opts}
+```
+
+- `msgId` is a number that determine message id to send and receive.
+- Each variables `actionName`, `args`, `opts` will be encode to URI Component.
+
+When `service.start` run, it will send a `start` action to the service and wait for response.
+
+When `service.stop` run, it will send a `stop` action to the service and wait for response.
+
+### Address
+
+Each action have their own address by combinate service name and action name.
+
+Addresses are unique and cannot be change over the platform.
+
+### Broker
+
+Broker is a container to host services. It will create communication environment between services.
+
+Usage:
+
+```js
+import { createBroker } from '@rugo-vn/service';
+
+const broker = createBroker();
+```
+
+## Concept
+
 - `system` is an entire program, which run by node command.
 - The `system` is devided into units, called `service`.
 - `service` identity is `name`. It's a unique value.
@@ -83,10 +174,10 @@ const settings = {
   ],
   _globals: {
     /* global variables */
-  }
-}
+  },
+};
 
-const broker = createBroker(settings); 
+const broker = createBroker(settings);
 
 const service = broker.createService(serviceDefine);
 
@@ -97,10 +188,10 @@ await broker.close();
 ```
 
 ## License
-	
+
 MIT.
 
-<!-- 
+<!--
 ## Hoạt động của service
 
 ### Tạo service
@@ -175,7 +266,7 @@ Từ `FileCursor` ta có thể lấy ra đường dẫn tạm thời của file 
 fileCursor.toPath();
 ```
 
-Methods: 
+Methods:
 
 - `fileCursor.toString()` or `fileCursor.toPath()` - to path string
 - `fileCursor.toText()` - read content and make it string
