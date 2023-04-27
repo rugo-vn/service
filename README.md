@@ -93,6 +93,21 @@ import { createBroker } from '@rugo-vn/service';
 const broker = createBroker();
 ```
 
+## Helper
+
+To build a service in the process quickly, we introduced `helper`.
+
+### NodeJS
+
+```js
+import { defineAction } from '@rugo-vn/service';
+
+defineAction('actionName', async function (args, opts) {
+  /* do something */
+  return /* return something */;
+});
+```
+
 ## Concept
 
 - `system` is an entire program, which run by node command.

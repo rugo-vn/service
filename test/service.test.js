@@ -1,160 +1,42 @@
-/* eslint-disable */
+import { expect } from 'chai';
+import { STATUSES } from '../src/constants.js';
+import { spawnService } from '../src/index.js';
+import { createTimer } from '../src/timer.js';
 
-import { assert, expect } from 'chai';
-import { createService } from '../src/service.js';
+describe('Service test', function () {
+  this.timeout(10000);
 
-describe('Service test', () => {
-  it('should create service', async () => {
-    const flows = [];
+  let serviceA;
 
-    const service = createService(
-      {},
-      {
-        name: 'demo',
-        actions: {
-          async listProperties() {
-            flows.push('listProperties');
-            return Object.keys(this);
-          },
-        },
-        methods: {
-          testBeforeMethod() {
-            flows.push('beforeMethodTest');
-          },
-          testAfterMethod() {
-            flows.push('afterMethodTest');
-          },
-        },
-        hooks: {
-          before: {
-            all() {
-              flows.push('hookBeforeAll');
-            },
+  it('should spawn service', async () => {
+    serviceA = await spawnService({
+      name: 'service-a',
+      exec: ['node', 'service.js'],
+      cwd: './test/fixtures',
+    });
 
-            listProperties: ['testBeforeMethod', 'testBeforeMethod'],
-          },
-          after: {
-            listProperties: 'testAfterMethod',
-          },
-        },
-        async started() {
-          flows.push('started');
-        },
-        async closed() {
-          flows.push('closed');
-        },
-      }
+    expect(await serviceA.start()).to.be.eq('ok');
+    expect(serviceA).to.has.property('status', STATUSES.online);
+  });
+
+  it('should calc delay duration between call', async () => {
+    const loopCount = 10000;
+    const timer = createTimer();
+    let res = 'ok';
+
+    timer.tick();
+    for (let i = 0; i < loopCount; i++) {
+      res = await serviceA.call('benchmark');
+    }
+    timer.tick((duration) =>
+      console.log(`Exec duration: ${duration / loopCount}ms/call`)
     );
 
-    // start
-    await service.start();
-
-    // non-existed action
-    try {
-      await service.call('demo.fail');
-      assert.fail('it should fail action');
-    } catch (err) {
-      expect(err).to.has.property(
-        'message',
-        'Invalid action address "demo.fail"'
-      );
-    }
-
-    // list this properties
-    const localProperties = await service.call('demo.listProperties');
-    expect(localProperties).to.not.contain.members(['start', 'close']);
-
-    const publicProperties = Object.keys(service);
-    expect(publicProperties).to.contain.members(['start', 'close']);
-
-    // close
-    await service.close();
-
-    expect(flows).to.has.members([
-      'started',
-      'hookBeforeAll',
-      'beforeMethodTest',
-      'beforeMethodTest',
-      'listProperties',
-      'afterMethodTest',
-      'closed',
-    ]);
+    expect(res).to.be.eq('ok');
   });
 
-  it('should error create service', async () => {
-    try {
-      createService(
-        {},
-        {
-          name: 'demo',
-          actions: { test() {} },
-          hooks: { before: { test: 'noMethod' } },
-        }
-      );
-      assert.fail('it should fail');
-    } catch (err) {
-      expect(err).to.has.property(
-        'message',
-        'Hook method "noMethod" is not found.'
-      );
-    }
-
-    try {
-      createService({}, { name: 'demo', methods: { name() {} } });
-      assert.fail('it should fail');
-    } catch (err) {
-      expect(err).to.has.property('message', 'Conflict method name "name"');
-    }
-
-    try {
-      const context = {};
-      createService(context, { name: 'demo', actions: { name() {} } });
-      createService(context, { name: 'demo', actions: { name() {} } });
-      assert.fail('it should fail');
-    } catch (err) {
-      expect(err).to.has.property(
-        'message',
-        'Conflict action name "demo.name"'
-      );
-    }
-  });
-
-  it('should access global variable', async () => {
-    const context = {};
-
-    const fooService = createService(context, {
-      name: 'foo',
-      actions: {
-        put() {
-          this.globals['name'] = 'rugo';
-        },
-        error() {
-          this.globals = {};
-        },
-      },
-    });
-    const barService = createService(context, {
-      name: 'bar',
-      actions: {
-        get() {
-          return this.globals;
-        },
-      },
-    });
-
-    await fooService.call('foo.put');
-    const res = await barService.call('bar.get');
-
-    expect(res).to.has.property('name', 'rugo');
-
-    try {
-      await fooService.call('foo.error');
-      assert.fail('should throw error');
-    } catch (err) {
-      expect(err).to.has.property(
-        'message',
-        `Cannot assign to read only property 'globals' of object '#<Object>'`
-      );
-    }
+  it('should stop service', async () => {
+    await serviceA.stop();
+    expect(serviceA).to.has.property('status', STATUSES.offline);
   });
 });

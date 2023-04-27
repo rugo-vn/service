@@ -62,6 +62,13 @@ export const createChannel = function ({ invoke, timeout = 1000, debug }) {
     });
   };
 
+  channel.destroy = function () {
+    for (const key in queue) {
+      queue[key].reject(new Error(`Destroy channel`));
+      delete queue[key];
+    }
+  };
+
   if (debug) {
     channel.queue = queue;
     channel.getCurrentId = () => currentId;
