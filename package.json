@@ -1,6 +1,6 @@
 {
   "name": "@rugo-vn/service",
-  "version": "2.1.0-beta.0",
+  "version": "2.1.0-beta.1",
   "description": "Microservice infrastructure",
   "bin": {
     "start": "src/start.js"
