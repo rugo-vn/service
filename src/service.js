@@ -65,6 +65,7 @@ export async function spawnService({ name, exec, cwd }) {
   service.proc = proc;
   service.call = curryN(2, callService)(service);
   service.start = () => startService(service);
+  service.ls = () => callService(service, 'ls');
   service.stop = () =>
     new Promise(async (resolve) => {
       onStop = resolve;

@@ -85,6 +85,7 @@ export async function createPeer({ name, port, endpoints = [], handle }) {
   };
   peer.send = async (recvName, ...args) =>
     await channels[recvName].send('exec', ...args);
+  peer.channels = channels;
 
   return peer;
 }

@@ -1,4 +1,5 @@
 import process from 'node:process';
+import { INTERNAL_ACTIONS } from '../constants.js';
 import { createSocket } from '../socket.js';
 
 let actionMapping = null;
@@ -12,6 +13,11 @@ async function setupProcess() {
 
     return await actionMapping[action](args, opts);
   });
+
+  actionMapping['ls'] = () =>
+    Object.keys(actionMapping).filter(
+      (name) => INTERNAL_ACTIONS.indexOf(name) === -1
+    );
 }
 
 export function defineAction(action, fn) {

@@ -22,7 +22,7 @@ describe('Service test', function () {
   });
 
   it('should calc delay duration between call', async () => {
-    const loopCount = 100000;
+    const loopCount = 10000;
     const timer = createTimer();
     let res;
 

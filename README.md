@@ -59,16 +59,13 @@ await service.stop();
 
 ### Communication
 
-Between NodeJS process and Service process, we define a communication channel.
+Between NodeJS process and Service process, we define a communication channel via UNIX socket.
 
-From NodeJS to Service:
+```js
+const socketA = await createSocket('/path/to/socket');
 
-```text
-data:{msgId}:{actionName}:{args}:{opts}
+await socketA.close();
 ```
-
-- `msgId` is a number that determine message id to send and receive.
-- Each variables `actionName`, `args`, `opts` will be encode to URI Component.
 
 When `service.start` run, it will send a `start` action to the service and wait for response.
 
@@ -89,7 +86,10 @@ Usage:
 ```js
 import { createBroker } from '@rugo-vn/service';
 
-const broker = createBroker();
+const broker = await createBroker({
+  port: /* tcp port for serve */
+  endpoints: [ /* list of endpoint to connect */ ]
+});
 ```
 
 ## Helper

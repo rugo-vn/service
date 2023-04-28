@@ -19,3 +19,5 @@ export const COM_ACTIONS = {
   reply: 'reply',
   send: 'send',
 };
+
+export const INTERNAL_ACTIONS = ['start', 'stop', 'ls'];
