@@ -1,17 +1,23 @@
 import process from 'node:process';
+import { clone, mergeDeepLeft } from 'ramda';
 import { INTERNAL_ACTIONS } from '../constants.js';
 import { createSocket } from '../socket.js';
 
 let actionMapping = null;
+let socket;
 
 async function setupProcess() {
   const socketPath = process.argv[process.argv.length - 1];
-  const socket = await createSocket(socketPath);
+  socket = await createSocket(socketPath);
 
-  socket.on('data', async (action, args, opts) => {
+  socket.on('data', async (action, args = {}, opts = {}) => {
     if (!actionMapping[action]) return null;
 
-    return await actionMapping[action](args, opts);
+    return await actionMapping[action].bind({
+      call(nextAddr, nextArgs = {}, nextOpts = {}) {
+        return callAction(nextAddr, nextArgs, mergeDeepLeft(nextOpts, opts));
+      },
+    })(args, clone(opts));
   });
 
   actionMapping['ls'] = () =>
@@ -29,4 +35,8 @@ export function defineAction(action, fn) {
   if (!action || !fn) return;
 
   actionMapping[action] = fn;
+}
+
+export async function callAction(addr, args, opts) {
+  return await socket.send(addr, args, opts);
 }

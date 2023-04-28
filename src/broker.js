@@ -1,4 +1,5 @@
 import { nanoid } from 'nanoid';
+import { curryN } from 'ramda';
 import { createPeer } from './net.js';
 import { spawnService } from './service.js';
 
@@ -15,7 +16,12 @@ export async function createBroker({
 
   // services
   for (const definition of definitions) {
-    services[definition.name] = await spawnService(definition);
+    services[definition.name] = await spawnService({
+      ...definition,
+      async hook(addr, args, opts) {
+        return await broker.call(addr, args, opts);
+      },
+    });
   }
 
   for (const name in services) {

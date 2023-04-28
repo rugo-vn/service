@@ -29,8 +29,8 @@ export function createChannel({
   const queue = {};
   let currentId = 0;
 
-  const justSend = (action, payload) => {
-    const id = ++currentId;
+  const justSend = (action, payload, id) => {
+    if (!id) id = ++currentId;
     const data = createSendData(id, action, payload);
     invoke(data);
     return id;
@@ -52,7 +52,7 @@ export function createChannel({
     }
 
     const nextRes = await handle(...payload);
-    justSend(COM_ACTIONS.reply, nextRes);
+    justSend(COM_ACTIONS.reply, nextRes, id);
   };
 
   channel.send = function (...args) {

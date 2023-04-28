@@ -21,7 +21,7 @@ async function stopService(service) {
   await service.socket.close();
 }
 
-export async function spawnService({ name, exec, cwd }) {
+export async function spawnService({ name, exec, cwd, hook = () => {} }) {
   // initialize
   const socketPath = resolve(cwd, '.socket', `${name}.socket`);
   let onStop = () => {};
@@ -37,6 +37,9 @@ export async function spawnService({ name, exec, cwd }) {
   service.socket = await createSocket(socketPath);
   service.waitDone = () => {};
   service.socket.on('conn', () => service.waitDone());
+  service.socket.on('data', async (...args) => {
+    return await hook(...args);
+  });
 
   // child process
   const proc = runChild({

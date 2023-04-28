@@ -13,12 +13,18 @@ describe('Service test', function () {
       name: 'service-a',
       exec: ['node', 'service.js'],
       cwd: './test/fixtures',
+      hook: () => 'ok hook',
     });
 
     expect(await serviceA.start()).to.be.eq('ok node');
     expect(await serviceA.call('benchmark')).to.be.eq('ok node benchmark');
 
     expect(serviceA).to.has.property('status', STATUSES.online);
+  });
+
+  it('should call nested', async () => {
+    const res = await serviceA.call('run');
+    expect(res).to.be.eq('ok hook');
   });
 
   it('should calc delay duration between call', async () => {
