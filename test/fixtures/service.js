@@ -2,9 +2,9 @@ import { defineAction } from '../../src/index.js';
 
 defineAction('start', () => {
   console.log('Process started');
-  return 'ok';
+  return 'ok node';
 });
 
 defineAction('benchmark', () => {
-  return 'ok';
+  return 'ok node benchmark';
 });

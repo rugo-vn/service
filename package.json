@@ -25,6 +25,7 @@
     "pino-inspector": "^0.1.0",
     "pino-pretty": "^9.1.0",
     "ramda": "^0.28.0",
+    "rimraf": "^5.0.0",
     "temp": "^0.9.4"
   },
   "devDependencies": {

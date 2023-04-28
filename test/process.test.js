@@ -2,24 +2,27 @@ import { runChild } from '../src/child.js';
 
 async function runChildProcess() {
   const child = runChild({
-    exec: ['node', 'service.js'],
+    exec: ['node', 'process.js'],
     cwd: './test/fixtures/',
     onData: (data) => console.log(`child -> parent: ` + data),
+    onError: (data) => console.log(`error: ` + data),
   });
 
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 500));
   child.kill();
 }
 
 describe('Child process test', () => {
   it('should create child process', async () => {
     const child = runChild({
-      exec: ['node', 'service.js'],
+      exec: ['node', 'process.js'],
       cwd: './test/fixtures/',
       onData: (data) => console.log(`child -> parent: ` + data),
+      onError: (data) => console.log(`error: ` + data),
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    child.stdin.write('Hello');
+    await new Promise((resolve) => setTimeout(resolve, 500));
     child.kill();
   });
 

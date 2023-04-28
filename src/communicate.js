@@ -1,57 +1,64 @@
-import { COM_ACTIONS, COM_PREFIX, COM_SEP } from './constants.js';
+import { COM_ACTIONS } from './constants.js';
 
 export const createSendData = function (id, action, payload) {
-  return `${COM_PREFIX}${id}${COM_SEP}${encodeURIComponent(
-    action
-  )}${COM_SEP}${encodeURIComponent(JSON.stringify(payload))}`;
+  return JSON.stringify({ id, action, payload });
 };
 
-export const parseReceivedData = function (data) {
-  data = data.toString();
+export const parseReceivedData = function (msg) {
+  msg = msg.toString();
 
-  if (data[0] !== COM_PREFIX[0] || data.indexOf(COM_PREFIX) !== 0) return null;
-
-  const ls = data.substr(COM_PREFIX.length).split(COM_SEP);
-  const id = parseInt(ls[0]);
-  const action = decodeURIComponent(ls[1]);
-  const raw = decodeURIComponent(ls[2]);
-
-  let payload;
+  let json;
   try {
-    payload = JSON.parse(raw);
+    json = JSON.parse(msg);
   } catch (_) {
     return null;
   }
 
-  if (!id || !action) return null;
+  if (!json.id || !json.action) return null;
 
-  return {
-    id,
-    action,
-    payload,
-  };
+  return json;
 };
 
-export const createChannel = function ({ invoke, timeout = 1000, debug }) {
+export function createChannel({
+  invoke = () => {},
+  handle = () => {},
+  timeout = 1000,
+  debug,
+}) {
   const channel = {};
   const queue = {};
   let currentId = 0;
 
-  channel.parse = parseReceivedData;
-
-  channel.receive = function (id, action, payload) {
-    if (!queue[id] || action !== COM_ACTIONS.reply) return;
-
-    queue[id].resolve(payload.data);
-    delete queue[id];
-  };
-
-  channel.send = function (action, payload) {
+  const justSend = (action, payload) => {
     const id = ++currentId;
     const data = createSendData(id, action, payload);
+    invoke(data);
+    return id;
+  };
+
+  channel.parse = parseReceivedData;
+
+  channel.receive = async function (msg) {
+    const res = parseReceivedData(msg);
+
+    if (!res) return;
+
+    const { id, action, payload } = res;
+
+    if (action === COM_ACTIONS.reply) {
+      queue[id].resolve(payload);
+      delete queue[id];
+      return;
+    }
+
+    const nextRes = await handle(...payload);
+    justSend(COM_ACTIONS.reply, nextRes);
+  };
+
+  channel.send = function (...args) {
+    const id = justSend(COM_ACTIONS.send, args);
     return new Promise((resolve, reject) => {
       queue[id] = { resolve };
-      invoke(data);
       if (timeout)
         setTimeout(() => {
           if (!queue[id]) return;
@@ -75,4 +82,4 @@ export const createChannel = function ({ invoke, timeout = 1000, debug }) {
   }
 
   return channel;
-};
+}

@@ -17,6 +17,5 @@ export const COM_SEP = ':';
 
 export const COM_ACTIONS = {
   reply: 'reply',
-  start: 'start',
-  stop: 'stop',
+  send: 'send',
 };

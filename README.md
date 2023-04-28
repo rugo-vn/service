@@ -33,7 +33,6 @@ const serviceDefine = {
   settings: {
     /* key-value settings */
   },
-  actions: [],
 };
 ```
 

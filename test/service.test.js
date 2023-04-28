@@ -15,28 +15,40 @@ describe('Service test', function () {
       cwd: './test/fixtures',
     });
 
-    expect(await serviceA.start()).to.be.eq('ok');
+    expect(await serviceA.start()).to.be.eq('ok node');
+    expect(await serviceA.call('benchmark')).to.be.eq('ok node benchmark');
+
     expect(serviceA).to.has.property('status', STATUSES.online);
   });
 
   it('should calc delay duration between call', async () => {
-    const loopCount = 10000;
+    const loopCount = 100000;
     const timer = createTimer();
-    let res = 'ok';
+    let res;
 
     timer.tick();
     for (let i = 0; i < loopCount; i++) {
       res = await serviceA.call('benchmark');
     }
     timer.tick((duration) =>
-      console.log(`Exec duration: ${duration / loopCount}ms/call`)
+      console.log(`Exec duration in Service A: ${duration / loopCount}ms/call`)
     );
 
-    expect(res).to.be.eq('ok');
+    expect(res).to.be.eq('ok node benchmark');
   });
 
   it('should stop service', async () => {
     await serviceA.stop();
     expect(serviceA).to.has.property('status', STATUSES.offline);
+  });
+
+  it('should spawn service immediately', async () => {
+    serviceA = await spawnService({
+      name: 'service-a',
+      exec: ['node', 'service.js'],
+      cwd: './test/fixtures',
+    });
+
+    await serviceA.stop();
   });
 });
