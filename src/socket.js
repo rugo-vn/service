@@ -1,7 +1,7 @@
 /**
  * Create easy bidirectional connection between two process.
  *
- * const socket = await createSocket(socketFile)
+ * const socket = await createSocket(pathOrPort)
  * socket.on('data', async (...args) => {
  *   return someData;
  * });
@@ -20,7 +20,21 @@ function bindReceiver(socket) {
   });
 }
 
-export async function createSocket(socketFile) {
+export async function createSocketServer(pathOrPort, fn) {
+  return await new Promise((resolve, reject) => {
+    const theServer = createServer(fn);
+
+    theServer.on('error', (e) => {
+      reject(e);
+    });
+
+    theServer.listen(pathOrPort, () => {
+      resolve(theServer);
+    });
+  });
+}
+
+export async function createSocket(pathOrPort, host) {
   const socket = {};
   socket.s = null;
   socket.channel = createChannel({
@@ -37,32 +51,30 @@ export async function createSocket(socketFile) {
   socket.events.conn = () => {};
 
   // try to create server
-  const server = await new Promise((resolve) => {
-    const theServer = createServer((s) => {
+  let server;
+  try {
+    server = await createSocketServer(pathOrPort, (s) => {
       socket.s = s;
       bindReceiver(socket);
       socket.events.conn();
-      resolve(theServer);
     });
-
-    theServer.on('error', (e) => {
-      if (e.code === 'EADDRINUSE') {
-        return resolve(null);
-      }
-    });
-
-    theServer.listen(socketFile, () => {
-      resolve(theServer);
-    });
-  });
+  } catch (e) {
+    if (e.code !== 'EADDRINUSE') {
+      throw e;
+    }
+  }
 
   // if not server, then create client
   socket.s = server
     ? socket.s
     : await new Promise((resolve) => {
-        const theSocket = connect(socketFile, () => {
-          resolve(theSocket);
-        });
+        const theSocket = host
+          ? connect(pathOrPort, host, () => {
+              resolve(theSocket);
+            })
+          : connect(pathOrPort, () => {
+              resolve(theSocket);
+            });
         theSocket.on('data', (data) => {});
         theSocket.on('end', () => {});
       });
@@ -85,4 +97,27 @@ export async function createSocket(socketFile) {
   };
 
   return socket;
+}
+
+export async function ping(pathOrPort, host) {
+  try {
+    const socket = await new Promise((resolve, reject) => {
+      const theSocket = host
+        ? connect(pathOrPort, host, () => {
+            resolve(theSocket);
+          })
+        : connect(pathOrPort, () => {
+            resolve(theSocket);
+          });
+
+      theSocket.on('error', () => {
+        reject(theSocket);
+      });
+    });
+    socket.destroy();
+    return true;
+  } catch (e) {
+    e.destroy();
+    return false;
+  }
 }

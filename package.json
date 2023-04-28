@@ -20,6 +20,7 @@
     "camelcase": "^7.0.0",
     "colors": "^1.4.0",
     "dotenv": "^16.0.1",
+    "nanoid": "^4.0.2",
     "node-emoji": "^1.11.0",
     "pino": "^8.11.0",
     "pino-inspector": "^0.1.0",

@@ -3,7 +3,7 @@ import { mkdirSync } from 'node:fs';
 import { connect, createServer } from 'node:net';
 import { dirname, resolve } from 'node:path';
 import { rimraf } from 'rimraf';
-import { createSocket } from '../src/socket.js';
+import { createSocket, ping } from '../src/socket.js';
 
 describe('UNIX socket test', function () {
   let socketFile, server, client;
@@ -106,5 +106,9 @@ describe('UNIX socket test', function () {
   it('should close socket conn from lib', async () => {
     await peerA.close();
     await peerB.close();
+  });
+
+  it('should not ping invalid address', async () => {
+    expect(await ping('127.0.0.1', 8000)).to.be.eq(false);
   });
 });
