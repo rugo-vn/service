@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import { HttpResponse } from '../src/classes.js';
 import { createPeer } from '../src/net.js';
 
 describe('Net test', function () {
@@ -9,6 +10,7 @@ describe('Net test', function () {
       name: 'peer-a',
       port: 8000,
       handle(...args) {
+        if (args[0] === 'http') return new HttpResponse({ body: 'ok' });
         return `PA: ${args[0]}`;
       },
     });
@@ -17,6 +19,8 @@ describe('Net test', function () {
       name: 'peer-b',
       port: 8001,
       handle(...args) {
+        if (args[0] === 'http')
+          throw new HttpResponse({ status: 403, body: 'access denied' });
         return `PB: ${args[0]}`;
       },
       endpoints: ['127.0.0.1:8000'],
@@ -41,6 +45,23 @@ describe('Net test', function () {
 
     const res3 = await peerC.send('peer-b', 'hello from c');
     expect(res3).to.be.eq(`PB: hello from c`);
+  });
+
+  it('should send and receive object', async () => {
+    const res = await peerB.send('peer-a', 'http');
+    expect(res.constructor.name).to.be.eq('HttpResponse');
+    expect(res).to.be.deep.eq({ status: 200, headers: {}, body: 'ok' });
+
+    try {
+      await peerC.send('peer-b', 'http');
+      assert.fail('should error');
+    } catch (e) {
+      expect(e).to.be.deep.eq({
+        status: 403,
+        headers: {},
+        body: 'access denied',
+      });
+    }
   });
 
   it('should close', async () => {

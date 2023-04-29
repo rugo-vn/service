@@ -2,6 +2,7 @@ import { assert, expect } from 'chai';
 import { STATUSES } from '../src/constants.js';
 import { spawnService } from '../src/index.js';
 import { createTimer } from '../src/timer.js';
+import { pack } from '../src/wrap.js';
 
 describe('Service test', function () {
   this.timeout(10000);
@@ -13,7 +14,7 @@ describe('Service test', function () {
       name: 'service-a',
       exec: ['node', 'service.js'],
       cwd: './test/fixtures',
-      hook: () => 'ok hook',
+      hook: async () => await pack(() => 'ok hook'),
     });
 
     expect(await serviceA.start()).to.be.eq('ok node');

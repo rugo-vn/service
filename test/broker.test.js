@@ -1,4 +1,4 @@
-import { expect } from 'chai';
+import { assert, expect } from 'chai';
 import { createBroker } from '../src/index.js';
 import { createTimer } from '../src/timer.js';
 
@@ -84,6 +84,20 @@ describe('Broker test', function () {
       )
     );
     expect(res).to.be.eq('ok node benchmark');
+  });
+
+  it('should nested call with throwable', async () => {
+    // nested call with throw
+    try {
+      await brokerC.call('service-b.retire');
+      assert.fail('should error');
+    } catch (e) {
+      expect(e).to.be.deep.eq({
+        status: 403,
+        headers: {},
+        body: 'access denied',
+      });
+    }
   });
 
   it('should transfer data', async () => {

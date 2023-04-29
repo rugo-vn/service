@@ -1,6 +1,7 @@
 import { connect } from 'node:net';
 import { createChannel } from './communicate.js';
 import { createSocketServer, ping } from './socket.js';
+import { pack, unpack } from './wrap.js';
 
 async function createSocketChannel(peer, socket) {
   const channel = createChannel({
@@ -14,7 +15,7 @@ async function createSocketChannel(peer, socket) {
           return { name: peer.name };
 
         case 'exec':
-          return await peer.handle(...args);
+          return await pack(() => peer.handle(...args));
       }
     },
   });
@@ -84,7 +85,7 @@ export async function createPeer({ name, port, endpoints = [], handle }) {
     await new Promise((resolve) => server.close(resolve));
   };
   peer.send = async (recvName, ...args) =>
-    await channels[recvName].send('exec', ...args);
+    unpack(await channels[recvName].send('exec', ...args));
   peer.channels = channels;
 
   return peer;

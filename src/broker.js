@@ -1,8 +1,9 @@
 import { nanoid } from 'nanoid';
-import { curryN } from 'ramda';
 import { createPeer } from './net.js';
 import { spawnService } from './service.js';
+import { pack } from './wrap.js';
 
+// @todo: optimize pack-unpack, not pack-unpack in broker.
 export async function createBroker({
   port,
   endpoints = [],
@@ -19,7 +20,7 @@ export async function createBroker({
     services[definition.name] = await spawnService({
       ...definition,
       async hook(addr, args, opts) {
-        return await broker.call(addr, args, opts);
+        return await broker.call(addr, args, opts, true);
       },
     });
   }
@@ -55,17 +56,21 @@ export async function createBroker({
   }
 
   // before return
-  broker.call = async (addr, args, opts) => {
+  broker.call = async (addr, args, opts, isFromService) => {
     const peerId = addrs[addr];
 
     if (!peerId) throw new Error(`Cannot find action ${addr}`);
 
     if (peerId === id) {
       const [serviceName, actionName] = addr.split('.');
-      return await services[serviceName].call(actionName, args, opts);
+      return isFromService
+        ? await pack(() => services[serviceName].call(actionName, args, opts))
+        : await services[serviceName].call(actionName, args, opts);
     }
 
-    return await peer.send(peerId, 'call', addr, args, opts);
+    return isFromService
+      ? await pack(() => peer.send(peerId, 'call', addr, args, opts))
+      : await peer.send(peerId, 'call', addr, args, opts);
   };
 
   broker.close = async () => {
