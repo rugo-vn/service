@@ -57,4 +57,14 @@ describe('Service test', function () {
 
     await serviceA.stop();
   });
+
+  it('should spawn empty service', async () => {
+    serviceA = await spawnService({
+      name: 'service-a',
+      exec: ['node', 'empty.js'],
+      cwd: './test/fixtures',
+    });
+
+    await serviceA.stop();
+  });
 });

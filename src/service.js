@@ -16,15 +16,19 @@ function startService(service) {
 }
 
 async function stopService(service) {
-  await callService(service, 'stop');
-  service.proc.kill('SIGINT');
+  if (service.status === STATUSES.offline) {
+    service.onStop();
+  } else {
+    await callService(service, 'stop');
+    service.proc.kill('SIGINT');
+  }
+
   await service.socket.close();
 }
 
 export async function spawnService({ name, exec, cwd, hook = () => {} }) {
   // initialize
   const socketPath = resolve(cwd, '.socket', `${name}.socket`);
-  let onStop = () => {};
 
   rimraf.sync(socketPath);
   if (!existsSync(dirname(socketPath)))
@@ -40,6 +44,7 @@ export async function spawnService({ name, exec, cwd, hook = () => {} }) {
   service.socket.on('data', async (...args) => {
     return await hook(...args);
   });
+  service.onStop = () => {};
 
   // child process
   const proc = runChild({
@@ -58,11 +63,13 @@ export async function spawnService({ name, exec, cwd, hook = () => {} }) {
       } else {
         service.logger.error(`Exited with code ${code}`);
       }
-      onStop();
+      service.waitDone();
+      service.onStop();
     },
   });
 
-  await new Promise((resolve) => (service.waitDone = resolve));
+  if (service.status === STATUSES.online)
+    await new Promise((resolve) => (service.waitDone = resolve));
 
   // before return
   service.proc = proc;
@@ -71,7 +78,7 @@ export async function spawnService({ name, exec, cwd, hook = () => {} }) {
   service.ls = () => callService(service, 'ls');
   service.stop = () =>
     new Promise(async (resolve) => {
-      onStop = resolve;
+      service.onStop = resolve;
       await stopService(service);
     });
 
