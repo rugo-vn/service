@@ -1,3 +1,4 @@
+import { HttpResponse } from '../../src/classes.js';
 import { defineAction, callAction } from '../../src/index.js';
 
 defineAction('start', () => {
@@ -27,4 +28,18 @@ defineAction('step', async function ({ step }, opts) {
     },
     ext ? { ext } : {}
   )}`;
+});
+
+defineAction('http', async function ({ isError }) {
+  if (isError) throw new HttpResponse({ status: 403, body: 'access denied' });
+  return new HttpResponse({ body: 'ok' });
+});
+
+defineAction('error', async function () {
+  throw new Error('should send error');
+});
+
+defineAction('retire', async function () {
+  await this.call('service-a.http', { isError: true });
+  return 'ok retired';
 });

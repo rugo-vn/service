@@ -46,9 +46,33 @@ describe('Service test', function () {
   it('should not call invalid action', async () => {
     try {
       await serviceA.call('invalid');
-      assert('should error');
+      assert.fail('should error');
     } catch (e) {
       expect(e).to.has.property('message', 'Invalid action "invalid"');
+    }
+  });
+
+  it('should return an object have construtor', async () => {
+    const res = await serviceA.call('http');
+    expect(res.constructor.name).to.be.eq('HttpResponse');
+    expect(res).to.be.deep.eq({ status: 200, headers: {}, body: 'ok' });
+
+    try {
+      await serviceA.call('http', { isError: true });
+      assert.fail('should error');
+    } catch (e) {
+      expect(e).to.be.deep.eq({
+        status: 403,
+        headers: {},
+        body: 'access denied',
+      });
+    }
+
+    try {
+      await serviceA.call('error');
+      assert.fail('should error');
+    } catch (e) {
+      expect(e).to.has.property('message', 'should send error');
     }
   });
 

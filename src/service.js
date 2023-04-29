@@ -6,6 +6,8 @@ import { createLogger } from './utils.js';
 import { existsSync, mkdirSync } from 'node:fs';
 import { createSocket } from './socket.js';
 import { curryN } from 'ramda';
+import * as Classes from './make.js';
+import { Exception } from './classes.js';
 
 async function callService(service, action, args = {}, opts = {}) {
   if (
@@ -14,7 +16,23 @@ async function callService(service, action, args = {}, opts = {}) {
   )
     throw new Error(`Invalid action "${action}"`);
 
-  return await service.socket.send(action, args, opts);
+  const { type, data, isThrow } = await service.socket.send(action, args, opts);
+
+  if (type === Exception.name) {
+    const newErr = new Error();
+    newErr.name = data.name;
+    newErr.message = data.message;
+    newErr.stack = data.stack;
+    throw newErr;
+  }
+
+  if (!Classes[`make${type}`]) throw new Error(`Invalid data type ${type}`);
+
+  const nextData = Classes[`make${type}`](data);
+
+  if (isThrow) throw nextData;
+
+  return nextData;
 }
 
 function startService(service) {

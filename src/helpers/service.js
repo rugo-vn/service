@@ -1,5 +1,6 @@
 import process from 'node:process';
-import { clone, mergeDeepLeft } from 'ramda';
+import { add, clone, isNil, mergeDeepLeft } from 'ramda';
+import { Exception } from '../classes.js';
 import { INTERNAL_ACTIONS } from '../constants.js';
 import { createSocket } from '../socket.js';
 
@@ -11,13 +12,34 @@ async function setupProcess() {
   socket = await createSocket(socketPath);
 
   socket.on('data', async (action, args = {}, opts = {}) => {
-    if (!actionMapping[action]) return null;
+    let data = undefined;
+    let isThrow = false;
 
-    return await actionMapping[action].bind({
-      call(nextAddr, nextArgs = {}, nextOpts = {}) {
-        return callAction(nextAddr, nextArgs, mergeDeepLeft(nextOpts, opts));
-      },
-    })(args, clone(opts));
+    if (actionMapping[action])
+      try {
+        data = await actionMapping[action].bind({
+          call(nextAddr, nextArgs = {}, nextOpts = {}) {
+            return callAction(
+              nextAddr,
+              nextArgs,
+              mergeDeepLeft(nextOpts, opts)
+            );
+          },
+        })(args, clone(opts));
+      } catch (err) {
+        if (err.constructor.name === 'Error') {
+          data = new Exception(err);
+        } else {
+          data = err;
+        }
+        isThrow = true;
+      }
+
+    return {
+      type: isNil(data) ? 'Nil' : data.constructor.name,
+      data,
+      isThrow,
+    };
   });
 
   actionMapping['ls'] = () =>
