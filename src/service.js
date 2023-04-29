@@ -1,13 +1,19 @@
 import { dirname, resolve } from 'node:path';
 import { rimraf } from 'rimraf';
 import { runChild } from './child.js';
-import { STATUSES } from './constants.js';
+import { STATUSES, INTERNAL_ACTIONS } from './constants.js';
 import { createLogger } from './utils.js';
 import { existsSync, mkdirSync } from 'node:fs';
 import { createSocket } from './socket.js';
 import { curryN } from 'ramda';
 
 async function callService(service, action, args = {}, opts = {}) {
+  if (
+    INTERNAL_ACTIONS.indexOf(action) === -1 &&
+    service.ls.indexOf(action) === -1
+  )
+    throw new Error(`Invalid action "${action}"`);
+
   return await service.socket.send(action, args, opts);
 }
 
@@ -44,6 +50,7 @@ export async function spawnService({ name, exec, cwd, hook = () => {} }) {
   service.socket.on('data', async (...args) => {
     return await hook(...args);
   });
+  service.ls = [];
   service.onStop = () => {};
 
   // child process
@@ -75,12 +82,15 @@ export async function spawnService({ name, exec, cwd, hook = () => {} }) {
   service.proc = proc;
   service.call = curryN(2, callService)(service);
   service.start = () => startService(service);
-  service.ls = () => callService(service, 'ls');
   service.stop = () =>
     new Promise(async (resolve) => {
       service.onStop = resolve;
       await stopService(service);
     });
+
+  if (service.status === STATUSES.online) {
+    service.ls = await callService(service, 'ls');
+  }
 
   return service;
 }

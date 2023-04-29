@@ -26,7 +26,7 @@ export async function createBroker({
 
   for (const name in services) {
     await services[name].start();
-    const actions = await services[name].ls();
+    const actions = services[name].ls;
     for (const action of actions) {
       addrs[`${name}.${action}`] = id;
     }

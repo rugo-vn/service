@@ -1,4 +1,4 @@
-import { expect } from 'chai';
+import { assert, expect } from 'chai';
 import { STATUSES } from '../src/constants.js';
 import { spawnService } from '../src/index.js';
 import { createTimer } from '../src/timer.js';
@@ -41,6 +41,15 @@ describe('Service test', function () {
     );
 
     expect(res).to.be.eq('ok node benchmark');
+  });
+
+  it('should not call invalid action', async () => {
+    try {
+      await serviceA.call('invalid');
+      assert('should error');
+    } catch (e) {
+      expect(e).to.has.property('message', 'Invalid action "invalid"');
+    }
   });
 
   it('should stop service', async () => {
