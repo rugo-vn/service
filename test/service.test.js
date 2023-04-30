@@ -76,6 +76,7 @@ describe('Service test', function () {
       await serviceA.call('error');
       assert.fail('should error');
     } catch (e) {
+      expect(e).to.has.property('name', 'ReferenceError');
       expect(e).to.has.property('message', 'should send error');
     }
   });

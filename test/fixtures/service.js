@@ -37,7 +37,7 @@ defineAction('http', async function ({ isError }) {
 });
 
 defineAction('error', async function () {
-  throw new Error('should send error');
+  throw new ReferenceError('should send error');
 });
 
 defineAction('retire', async function () {

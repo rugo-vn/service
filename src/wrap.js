@@ -10,7 +10,7 @@ export async function pack(fn) {
     try {
       data = await fn();
     } catch (err) {
-      if (err.constructor.name === 'Error') {
+      if (err instanceof Error) {
         data = new Exception(err);
       } else {
         data = err;
