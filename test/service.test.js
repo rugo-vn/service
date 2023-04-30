@@ -77,6 +77,11 @@ describe('Service test', function () {
     }
   });
 
+  it('should internal call', async () => {
+    const res = await serviceA.call('inner');
+    expect(res).to.be.eq('ok node benchmark');
+  });
+
   it('should stop service', async () => {
     await serviceA.stop();
     expect(serviceA).to.has.property('status', STATUSES.offline);

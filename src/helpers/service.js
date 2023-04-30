@@ -44,6 +44,15 @@ export function defineAction(action, fn) {
   actionMapping[action] = fn;
 }
 
-export async function callAction(addr, args, opts) {
+export async function callAction(addr, args = {}, opts = {}) {
+  if (actionMapping[addr]) {
+    const res = await actionMapping[addr].bind({
+      call(nextAddr, nextArgs = {}, nextOpts = {}) {
+        return callAction(nextAddr, nextArgs, mergeDeepLeft(nextOpts, opts));
+      },
+    })(args, clone(opts));
+    return res;
+  }
+
   return unpack(await socket.send(addr, args, opts));
 }

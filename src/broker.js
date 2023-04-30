@@ -3,7 +3,6 @@ import { createPeer } from './net.js';
 import { spawnService } from './service.js';
 import { unpack } from './wrap.js';
 
-// @todo: settings
 export async function createBroker({
   port,
   endpoints = [],

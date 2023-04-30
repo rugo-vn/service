@@ -43,3 +43,7 @@ defineAction('retire', async function () {
   await this.call('service-a.http', { isError: true });
   return 'ok retired';
 });
+
+defineAction('inner', async function () {
+  return await this.call('benchmark');
+});
