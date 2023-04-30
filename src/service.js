@@ -49,7 +49,7 @@ export async function spawnService({
   settings = {},
 }) {
   // initialize
-  const socketPath = resolve(cwd, '.socket', `${name}.socket`);
+  const socketPath = resolve(cwd || './', '.socket', `${name}.socket`);
 
   rimraf.sync(socketPath);
   if (!existsSync(dirname(socketPath)))
