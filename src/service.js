@@ -6,8 +6,6 @@ import { createLogger } from './utils.js';
 import { existsSync, mkdirSync } from 'node:fs';
 import { createSocket } from './socket.js';
 import { curryN } from 'ramda';
-import * as Classes from './make.js';
-import { Exception } from './classes.js';
 import { unpack } from './wrap.js';
 
 async function callService(
@@ -29,7 +27,7 @@ async function callService(
 }
 
 function startService(service) {
-  return callService(service, 'start');
+  return callService(service, 'start', service.settings);
 }
 
 async function stopService(service) {
@@ -43,7 +41,13 @@ async function stopService(service) {
   await service.socket.close();
 }
 
-export async function spawnService({ name, exec, cwd, hook = () => {} }) {
+export async function spawnService({
+  name,
+  exec,
+  cwd,
+  hook = () => {},
+  settings = {},
+}) {
   // initialize
   const socketPath = resolve(cwd, '.socket', `${name}.socket`);
 
@@ -53,6 +57,7 @@ export async function spawnService({ name, exec, cwd, hook = () => {} }) {
 
   // init service
   const service = {};
+  service.settings = settings;
   service.logger = createLogger(name);
   service.status = STATUSES.online;
   service.socket = await createSocket(socketPath);

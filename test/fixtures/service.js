@@ -1,9 +1,10 @@
 import { HttpResponse } from '../../src/classes.js';
 import { defineAction, callAction } from '../../src/index.js';
 
-defineAction('start', () => {
+defineAction('start', (settings) => {
   console.log('Process started');
-  return 'ok node';
+  console.log(settings);
+  return settings.key;
 });
 
 defineAction('benchmark', function () {

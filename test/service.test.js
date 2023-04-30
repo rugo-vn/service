@@ -15,6 +15,9 @@ describe('Service test', function () {
       exec: ['node', 'service.js'],
       cwd: './test/fixtures',
       hook: async () => await pack(() => 'ok hook'),
+      settings: {
+        key: 'ok node',
+      },
     });
 
     expect(await serviceA.start()).to.be.eq('ok node');
