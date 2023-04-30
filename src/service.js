@@ -10,14 +10,22 @@ import * as Classes from './make.js';
 import { Exception } from './classes.js';
 import { unpack } from './wrap.js';
 
-async function callService(service, action, args = {}, opts = {}) {
+async function callService(
+  service,
+  action,
+  args = {},
+  opts = {},
+  isUnpack = true
+) {
   if (
     INTERNAL_ACTIONS.indexOf(action) === -1 &&
     service.ls.indexOf(action) === -1
   )
     throw new Error(`Invalid action "${action}"`);
 
-  return unpack(await service.socket.send(action, args, opts));
+  const res = await service.socket.send(action, args, opts);
+
+  return isUnpack ? unpack(res) : res;
 }
 
 function startService(service) {

@@ -1,9 +1,9 @@
 import { nanoid } from 'nanoid';
 import { createPeer } from './net.js';
 import { spawnService } from './service.js';
-import { pack } from './wrap.js';
+import { unpack } from './wrap.js';
 
-// @todo: optimize pack-unpack, not pack-unpack in broker.
+// @todo: settings
 export async function createBroker({
   port,
   endpoints = [],
@@ -45,7 +45,7 @@ export async function createBroker({
 
         case 'call':
           const [addr, args, opts] = raw;
-          return await broker.call(addr, args, opts);
+          return await broker.call(addr, args, opts, true);
       }
     },
   });
@@ -56,21 +56,24 @@ export async function createBroker({
   }
 
   // before return
-  broker.call = async (addr, args, opts, isFromService) => {
+  broker.call = async (addr, args, opts, internalCall) => {
     const peerId = addrs[addr];
 
     if (!peerId) throw new Error(`Cannot find action ${addr}`);
 
     if (peerId === id) {
       const [serviceName, actionName] = addr.split('.');
-      return isFromService
-        ? await pack(() => services[serviceName].call(actionName, args, opts))
-        : await services[serviceName].call(actionName, args, opts);
+      const res = await services[serviceName].call(
+        actionName,
+        args,
+        opts,
+        false
+      );
+      return internalCall ? res : unpack(res);
     }
 
-    return isFromService
-      ? await pack(() => peer.send(peerId, 'call', addr, args, opts))
-      : await peer.send(peerId, 'call', addr, args, opts);
+    const res = await peer.send(peerId, 'call', addr, args, opts);
+    return internalCall ? res : unpack(res);
   };
 
   broker.close = async () => {
