@@ -33,6 +33,7 @@ export async function createBroker({
   }
 
   // peer
+  // @todo: non-peer mode
   const peer = await createPeer({
     name: id,
     port,

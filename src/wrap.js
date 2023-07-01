@@ -2,6 +2,7 @@ import { isNil } from 'ramda';
 import { Exception } from './classes.js';
 import * as Classes from './make.js';
 
+// @todo: export these fns
 export async function pack(fn) {
   let data = undefined;
   let isThrow = false;

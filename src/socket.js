@@ -16,7 +16,11 @@ function bindReceiver(socket) {
   if (!socket.s) return;
 
   socket.s.on('data', (msg) => {
-    socket.channel.receive(msg);
+    for (const m of msg
+      .toString()
+      .split('\n')
+      .filter((i) => i))
+      socket.channel.receive(m);
   });
 }
 

@@ -1,14 +1,10 @@
 {
   "name": "@rugo-vn/service",
-  "version": "2.1.0-beta.3",
+  "version": "2.1.0-beta.4",
   "description": "Microservice infrastructure",
-  "bin": {
-    "start": "src/start.js"
-  },
-  "main": "src/index.js",
+  "main": "./src/index.js",
   "type": "module",
   "scripts": {
-    "start": "node src/start.js",
     "test": "mocha",
     "coverage": "c8 npm run test",
     "publish:beta": "npm publish --access public --tag beta",

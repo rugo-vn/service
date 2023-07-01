@@ -99,8 +99,13 @@ describe('UNIX socket test', function () {
       return 'ok';
     });
 
-    const res = await peerB.send(1, 'a', true);
-    expect(res).to.be.eq('ok');
+    const res = await Promise.all([
+      peerB.send(1, 'a', true),
+      peerB.send(1, 'a', true),
+      peerB.send(1, 'a', true),
+    ]);
+
+    expect(res).to.has.members(['ok', 'ok', 'ok']);
   });
 
   it('should close socket conn from lib', async () => {
