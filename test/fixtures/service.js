@@ -37,7 +37,9 @@ defineAction('http', async function ({ isError }) {
 });
 
 defineAction('error', async function () {
-  throw new ReferenceError('should send error');
+  const err = new ReferenceError('should send error');
+  err.data = { paramA: 'valueA' };
+  throw err;
 });
 
 defineAction('retire', async function () {
@@ -47,4 +49,9 @@ defineAction('retire', async function () {
 
 defineAction('inner', async function () {
   return await this.call('benchmark');
+});
+
+defineAction('except', async function (ecpt) {
+  console.log('Exception deletected: ', ecpt.name);
+  throw ecpt;
 });

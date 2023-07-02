@@ -20,4 +20,4 @@ export const COM_ACTIONS = {
   send: 'send',
 };
 
-export const INTERNAL_ACTIONS = ['start', 'stop', 'ls'];
+export const INTERNAL_ACTIONS = ['start', 'stop', 'ls', 'except'];

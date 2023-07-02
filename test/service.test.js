@@ -78,6 +78,8 @@ describe('Service test', function () {
     } catch (e) {
       expect(e).to.has.property('name', 'ReferenceError');
       expect(e).to.has.property('message', 'should send error');
+      expect(e).to.has.property('data');
+      expect(e.data).to.has.property('paramA', 'valueA');
     }
   });
 

@@ -33,6 +33,7 @@ export function unpack({ type, data, isThrow }) {
     newErr.name = data.name;
     newErr.message = data.message;
     newErr.stack = data.stack;
+    newErr.data = data.data;
     throw newErr;
   }
 

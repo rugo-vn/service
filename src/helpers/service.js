@@ -7,6 +7,18 @@ import { pack, unpack } from '../wrap.js';
 let actionMapping = null;
 let socket;
 
+async function wrapExcept(fn, args, opts) {
+  const exceptAction = actionMapping['except'];
+
+  if (!exceptAction) return await fn.bind(this)(args, opts);
+
+  try {
+    return await fn.bind(this)(args, opts);
+  } catch (err) {
+    return await exceptAction.bind(this)(err, args, opts);
+  }
+}
+
 async function setupProcess() {
   const socketPath = process.argv[process.argv.length - 1];
   socket = await createSocket(socketPath);
@@ -14,7 +26,7 @@ async function setupProcess() {
   socket.on('data', async (action, args = {}, opts = {}) => {
     return actionMapping[action]
       ? await pack(() =>
-          actionMapping[action].bind({
+          wrapExcept.bind({
             call(nextAddr, nextArgs = {}, nextOpts = {}) {
               return callAction(
                 nextAddr,
@@ -22,7 +34,7 @@ async function setupProcess() {
                 mergeDeepLeft(nextOpts, opts)
               );
             },
-          })(args, clone(opts))
+          })(actionMapping[action], args, clone(opts))
         )
       : await pack();
   });

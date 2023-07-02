@@ -9,6 +9,7 @@ export class Exception {
     this.name = err.name;
     this.message = err.message;
     this.stack = err.stack;
+    this.data = err.data;
   }
 }
 
